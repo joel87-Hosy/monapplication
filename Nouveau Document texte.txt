@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord Maintenance FO - ITC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .text-moov-blue { color: #0056b3; }
+        .bg-moov-blue { background-color: #0056b3; }
+        .bg-moov-orange { background-color: #ff8c00; }
+        .hover-bg-moov-orange:hover { background-color: #e67e00; }
+        .hover-bg-moov-blue:hover { background-color: #004499; }
+
+        /* Styles de la carte et de la liste pour simuler l'UI */
+        .mock-map {
+            height: 300px;
+            background-color: #e0e0e0;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" opacity="0.5"><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="10" fill="%23666">Carte Similée (Nécessite Base de Données)</text><circle cx="20" cy="30" r="3" fill="red"/><circle cx="50" cy="70" r="3" fill="red"/><circle cx="80" cy="40" r="3" fill="red"/></svg>');
+            background-repeat: no-repeat;
+            background-position: center;
+            border-radius: 0.5rem;
+            border: 1px solid #ccc;
+        }
+        .mock-incident-list {
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        .incident-item {
+            border-left: 5px solid #ff8c00;
+        }
+    </style>
+</head>
+<body class="bg-blue-50 font-sans leading-normal tracking-normal">
+
+    <div class="container mx-auto max-w-6xl p-4 md:p-8">
+
+        <header class="text-center mb-10 p-6 bg-white rounded-lg shadow-xl">
+            <img src="logo ITC.png" alt="Logo ITC Ivoire Techno Com" class="h-12 mx-auto mb-4">
+            <h1 class="text-4xl font-bold text-gray-800">Tableau de Bord Maintenance FO</h1>
+            <h2 class="text-xl text-moov-blue font-semibold mt-2">Gestion des Incidents Moov Africa</h2>
+        </header>
+
+        <section class="mb-10">
+            <h3 class="text-2xl font-bold text-gray-700 mb-4 border-b pb-2 border-moov-blue">Actions Rapides</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <div onclick="openReportGenerator()" class="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition duration-300 cursor-pointer border-t-4 border-moov-blue hover:border-moov-orange">
+                    <div class="text-3xl mb-3 text-moov-blue">📄</div>
+                    <h4 class="text-xl font-semibold mb-2">Générer Rapport d'Incident</h4>
+                    <p class="text-gray-600">Démarrer le processus pour créer un nouveau Rapport de Résolution (Étapes 1 à 9).</p>
+                </div>
+
+                <div onclick="openBOQGenerator()" class="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition duration-300 cursor-pointer border-t-4 border-moov-blue hover:border-moov-orange">
+                    <div class="text-3xl mb-3 text-moov-blue">💰</div>
+                    <h4 class="text-xl font-semibold mb-2">Générer BOQ / Proforma</h4>
+                    <p class="text-gray-600">Accéder directement à l'outil de calcul du Bordereau de Prix.</p>
+                </div>
+
+                <div onclick="alert('Cette fonctionnalité nécessite une base de données. Ouverture de l\'interface de déclaration simulée.')" class="bg-white p-6 rounded-lg shadow-lg transition duration-300 cursor-pointer border-t-4 border-moov-blue hover:border-moov-orange">
+                    <div class="text-3xl mb-3 text-moov-blue">🚨</div>
+                    <h4 class="text-xl font-semibold mb-2">Déclarer Nouvel Incident</h4>
+                    <p class="text-gray-600">Enregistrer immédiatement un nouveau cas de coupure (Fonctionnalité simulée).</p>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h3 class="text-2xl font-bold text-gray-700 mb-4 border-b pb-2 border-moov-blue">Suivi des Incidents (Maquettes)</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                <div>
+                    <h4 class="text-xl font-semibold text-gray-800 mb-3">Carte des Incidents Récents</h4>
+                    <div class="mock-map flex items-center justify-center text-center text-gray-600">
+                        <p class="text-lg font-medium">Carte Similée (Points Rouges = Incidents)</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-xl font-semibold text-gray-800 mb-3">Liste des Déclarations (Simulée)</h4>
+                    <div class="mock-incident-list bg-white p-4 rounded-lg shadow">
+                        <div class="incident-item p-3 mb-2 bg-gray-50 rounded">
+                            <p class="font-bold text-sm">#TICKET 20251113-001</p>
+                            <p class="text-xs text-gray-600">**Liaison:** FO_ABJ_YAM | **Statut:** En cours</p>
+                        </div>
+                         <div class="incident-item p-3 mb-2 bg-gray-50 rounded">
+                            <p class="font-bold text-sm">#TICKET 20251113-002</p>
+                            <p class="text-xs text-gray-600">**Liaison:** FO_DAL_MAN | **Statut:** Résolu</p>
+                        </div>
+                        <div class="incident-item p-3 mb-2 bg-gray-50 rounded">
+                            <p class="font-bold text-sm">#TICKET 20251113-003</p>
+                            <p class="text-xs text-gray-600">**Liaison:** FO_ABJ_BAS | **Statut:** En cours</p>
+                        </div>
+                        <p class="text-center text-sm text-gray-500 mt-2">... Les données réelles nécessitent une base de données.</p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        function openReportGenerator() {
+            // Ouvre la page du rapport dans un nouvel onglet
+            window.open('rapport_incident.html', '_blank');
+        }
+
+        function openBOQGenerator() {
+            // Ouvre la page du BOQ dans un nouvel onglet
+            window.open('boq_generator.html', '_blank');
+        }
+
+        // Vous pouvez ajouter d'autres fonctions ici pour les maquettes.
+    </script>
+</body>
+</html>

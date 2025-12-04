@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de Rapport d'Incident</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* ======================================================================
+           STYLES POUR L'IMPRESSION (RENDU PDF FINAL DU RAPPORT)
+           ====================================================================== */
+        @media print {
+            * {
+                font-size: 11pt !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            
+            body {
+                background-color: white !important;
+                margin: 1.5cm !important; 
+                position: relative;
+            }
+            
+            /* Masquer les éléments non nécessaires au rapport final */
+            .print-button, input[type="file"], .nav-buttons, .reset-button, #current-step-title, #custom-modal {
+                display: none !important;
+            }
+
+            /* Afficher TOUS les panneaux d'onglets pour l'impression */
+            .tab-panel {
+                display: block !important;
+                page-break-after: auto; 
+                break-before: always; 
+            }
+            
+            /* Rendu des champs de formulaire comme du texte lisible et formaté (Bleu Moov) */
+            input, textarea, select {
+                border: 1px solid transparent !important;
+                box-shadow: none !important;
+                color: #0056b3 !important; 
+                font-weight: 600 !important;
+                background-color: white !important; 
+            }
+            
+            input[type="date"], input[type="time"] {
+                border-bottom: 1px dashed #999 !important;
+            }
+            
+            .report-section {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                margin-bottom: 25px; 
+                padding: 15px !important; 
+            }
+            
+            .report-section h3 {
+                font-size: 18pt !important; 
+                font-weight: 700 !important; 
+                color: #0056b3 !important;
+                border-bottom: 2px solid #0056b3 !important; 
+                padding-bottom: 8px !important;
+                margin-bottom: 15px !important;
+            }
+            .report-section h4 {
+                font-size: 14pt !important;
+                font-weight: 600 !important;
+                color: #333 !important;
+            }
+
+            .image-preview-container {
+                border: 1px solid #ccc !important;
+                height: 250px !important; 
+            }
+            
+            /* FILIGRANE */
+            body::before {
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                /* Remplacement par l'image ITC */
+                background-image: url('LOGO ITC.png'); 
+                background-repeat: no-repeat;
+                background-position: center center;
+                background-size: 80%;
+                opacity: 0.08; 
+                z-index: -1;
+            }
+
+            /* EN-TÊTE OPTIMISÉ POUR LE PDF */
+            .header-logos {
+                margin-bottom: 2cm !important; 
+                padding: 1cm !important; 
+                border-bottom: 3px solid #0056b3 !important; 
+            }
+            .header-logos h1 { font-size: 24pt !important; font-weight: 900 !important; }
+            #dynamic-liaison-label { font-size: 13pt !important; }
+            #dynamic-liaison-display { font-size: 16pt !important; }
+            .header-logos img { height: 2cm !important; }
+            .text-green-600 { color: #10B981 !important; font-weight: 700 !important; }
+            .text-red-600 { color: #EF4444 !important; font-weight: 700 !important; }
+        }
+        
+        /* ======================================================================
+           STYLES POUR L'ÉCRAN
+           ====================================================================== */
+
+        .text-moov-blue { color: #0056b3; }
+        .bg-moov-blue { background-color: #0056b3; }
+        .hover-bg-moov-orange:hover { background-color: #e67e00; }
+        .bg-moov-orange { background-color: #ff8c00; }
+        .bg-moov-red { background-color: #dc3545; }
+        .hover-bg-moov-red:hover { background-color: #c82333; }
+        .bg-gray-500 { background-color: #6b7280; }
+        .hover-bg-gray-700:hover { background-color: #4b5563; }
+        
+        #dynamic-liaison-display { font-size: 1.5rem; font-weight: 700; color: #ff8c00; margin-top: 0.5rem; }
+        .delay-container { display: flex; align-items: center; gap: 8px; }
+        .delay-icon { font-size: 1.5rem; line-height: 1; }
+        .text-green-600 { color: #10B981 !important; }
+        .text-red-600 { color: #EF4444 !important; }
+        .image-preview-container {
+            width: 100%; height: 200px; background-color: #f3f4f6; border: 2px dashed #d1d5db; border-radius: 0.5rem; display: flex; align-items: center; justify-content: center; overflow: hidden; margin-top: 1rem;
+        }
+        .image-preview { width: 100%; height: 100%; object-fit: contain; }
+        .image-preview-placeholder { color: #6b7280; font-style: italic; }
+        
+        /* Styles pour la modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background-color: rgba(0, 0, 0, 0.5); z-index: 50; 
+            display: flex; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background-color: white; padding: 1.5rem; border-radius: 0.75rem; 
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); max-width: 400px; width: 90%;
+            text-align: center;
+        }
+    </style>
+</head>
+<body class="bg-blue-50 font-sans leading-normal tracking-normal">
+
+    <div class="container mx-auto max-w-4xl p-4 md:p-8">
+
+        <header class="header-logos flex justify-between items-center mb-8 bg-white p-4 rounded-lg shadow-md">
+            <!-- LOGO ITC à gauche -->
+            <img src="LOGO ITC.png" alt="Logo ITC Ivoire Techno Com" class="h-12 md:h-16">
+            
+            <div class="text-center flex-grow flex flex-col justify-center items-center">
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-800">RAPPORT DE RÉSOLUTION D'INCIDENT</h1>
+                <h4 id="dynamic-liaison-label" class="text-xl text-gray-600 font-medium mt-1"></h4> 
+                <h3 id="dynamic-liaison-display" class="uppercase"></h3>
+                <h2 class="text-xl text-moov-blue font-semibold">Moov Africa</h2> 
+            </div>
+            
+            <!-- LOGO MOOV à droite -->
+            <img src="logo MOOV.png" alt="Logo Moov Africa" class="h-12 md:h-16">
+        </header>
+
+        <h2 id="current-step-title" class="text-2xl font-bold mb-4 text-gray-800 text-center bg-white p-3 rounded shadow">1. Informations Générales</h2>
+
+        <div id="report-form" class="space-y-6" oninput="saveFormData(); updateBilan();">
+            
+            <!-- Contenu des onglets (identique à l'original) -->
+            <!-- ... Début des 9 onglets ... -->
+            
+            <div id="tab-1" class="tab-panel">
+                <section class="report-section bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-semibold mb-4 border-b pb-2 border-moov-blue text-moov-blue">Détails de l'Incident</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label for="liaison-nom" class="block font-medium text-gray-700">Nom de Liaison (ex: FO_ACxxx) :</label>
+                            <input type="text" id="liaison-nom" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue" oninput="updateBilan()">
+                        </div>
+                        <div>
+                            <label for="ticket-numero" class="block font-medium text-gray-700">Numéro de Ticket :</label>
+                            <input type="text" id="ticket-numero" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                        </div>
+                        
+                        <div>
+                            <label for="zone-maintenance" class="block font-medium text-gray-700">Zone de Maintenance :</label>
+                            <select id="zone-maintenance" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue" onchange="toggleOtherZoneField()">
+                                <option value="">-- Choisir --</option>
+                                <option value="ABIDJAN">ABIDJAN</option>
+                                <option value="YAMOUSSOUKRO">YAMOUSSOUKRO</option>
+                                <option value="DALOA">DALOA</option>
+                                <option value="MAN">MAN</option>
+                                <option value="AUTRE">AUTRE</option>
+                            </select>
+                        </div>
+                        
+                        <div id="zone-maintenance-autre-container" style="display: none;">
+                            <label for="zone-maintenance-autre" class="block font-medium text-gray-700">Spécifier la zone (AUTRE) :</label>
+                            <input type="text" id="zone-maintenance-autre" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                        </div>
+                        <div>
+                            <label for="entreprise" class="block font-medium text-gray-700">Entreprise :</label>
+                            <input type="text" id="entreprise" value="ITC Ivoire Techno Com" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                        </div>
+                        <div>
+                            <label for="intervenant" class="block font-medium text-gray-700">Intervenant :</label>
+                            <input type="text" id="intervenant" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                        </div>
+                        <div>
+                            <label for="contact" class="block font-medium text-gray-700">Contact :</label>
+                            <input type="text" id="contact" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                        </div>
+                        
+                        <div class="md:col-span-3">
+                            <h4 class="text-lg font-semibold mt-4 mb-2">Chronologie</h4>
+                        </div>
+                        
+                        <div>
+                            <label for="date-coupure" class="block font-medium text-gray-700">Date de coupure :</label>
+                            <input type="date" id="date-coupure" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue" oninput="calculateCoupureToRemonteeDelay()">
+                        </div>
+                        <div>
+                            <label for="heure-coupure" class="block font-medium text-gray-700">Heure de coupure :</label>
+                            <input type="time" id="heure-coupure" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue" oninput="calculateCoupureToRemonteeDelay()">
+                        </div>
+                        <div>
+                            <label for="delay-coupure-remontee" class="block font-medium text-gray-700">Délai Coupure → Remontée (TTR) :</label>
+                            <div class="delay-container mt-1">
+                                <input type="text" id="delay-coupure-remontee" class="block w-full rounded-md border-gray-300 shadow-sm bg-white text-black font-bold" readonly>
+                                <span id="delay-icon-ttr" class="delay-icon text-2xl"></span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label for="date-remontee" class="block font-medium text-gray-700">Date de remontée :</label>
+                            <input type="date" id="date-remontee" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue" oninput="calculateCoupureToRemonteeDelay();">
+                        </div>
+                        <div>
+                            <label for="heure-remontee" class="block font-medium text-gray-700">Heure de remontée :</label>
+                            <input type="time" id="heure-remontee" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue" oninput="calculateCoupureToRemonteeDelay();">
+                        </div>
+                        <div></div> 
+                        
+                        <div class="md:col-span-2">
+                            <label for="agent-confirmation" class="block font-medium text-gray-700">Agent Confirmant la Remontée :</label>
+                            <input type="text" id="agent-confirmation" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                        </div>
+                        <div>
+                            <label for="statut-resolution" class="block font-medium text-gray-700">Statut de la résolution :</label>
+                            <select id="statut-resolution" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                                <option value="">-- Choisir --</option>
+                                <option value="Provisoire">Provisoire</option>
+                                <option value="Définitif">Définitif</option>
+                            </select>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div id="tab-2" class="tab-panel hidden">
+                <section class="report-section bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-semibold mb-4 border-b pb-2 border-moov-blue text-moov-blue">2. Mesure sur Site (Détermination lieu de coupure)</h3>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block font-medium text-gray-700">Image ODF de Mesure</label>
+                            <input type="file" accept="image/*" class="mt-1 block w-full text-sm" onchange="previewImage(event, 'img-preview-mesure-1'); saveFormData();">
+                            <div class="image-preview-container">
+                                <img id="img-preview-mesure-1" class="image-preview" alt="Aperçu ODF Mesure">
+                                <span id="img-preview-mesure-1-placeholder" class="image-preview-placeholder">Aperçu de l'image</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block font-medium text-gray-700">Image Mesure ODF (Localisation défaut)</label>
+                            <input type="file" accept="image/*" class="mt-1 block w-full text-sm" onchange="previewImage(event, 'img-preview-mesure-2'); saveFormData();">
+                            <div class="image-preview-container">
+                                <img id="img-preview-mesure-2" class="image-preview" alt="Aperçu Localisation Défaut">
+                                <span id="img-preview-mesure-2-placeholder" class="image-preview-placeholder">Aperçu de l'image</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="liaison-odf" class="block font-medium text-gray-700">Liaison ODF :</label>
+                            <input type="text" id="liaison-odf" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                        </div>
+                        <div>
+                            <label for="distance-totale" class="block font-medium text-gray-700">Distance Totale de la Liaison :</label>
+                            <input type="text" id="distance-totale" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="distance-arret" class="block font-medium text-gray-700">Distance d'Arrêt :</label>
+                            <input type="text" id="distance-arret" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="commentaire-mesure" class="block font-medium text-gray-700">Commentaire :</label>
+                            <textarea id="commentaire-mesure" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue"></textarea>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div id="tab-3" class="tab-panel hidden">
+                <section class="report-section bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-semibold mb-4 border-b pb-2 border-moov-blue text-moov-blue">3. Recherche du Point de Coupure</h3>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block font-medium text-gray-700">Image de la Recherche en Cours 1</label>
+                            <input type="file" accept="image/*" class="mt-1 block w-full text-sm" onchange="previewImage(event, 'img-preview-recherche-1'); saveFormData();">
+                            <div class="image-preview-container">
+                                <img id="img-preview-recherche-1" class="image-preview" alt="Aperçu Recherche 1">
+                                <span id="img-preview-recherche-1-placeholder" class="image-preview-placeholder">Aperçu de l'image</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block font-medium text-gray-700">Image de la Recherche en Cours 2</label>
+                            <input type="file" accept="image/*" class="mt-1 block w-full text-sm" onchange="previewImage(event, 'img-preview-recherche-2'); saveFormData();">
+                            <div class="image-preview-container">
+                                <img id="img-preview-recherche-2" class="image-preview" alt="Aperçu Recherche 2">
+                                <span id="img-preview-recherche-2-placeholder" class="image-preview-placeholder">Aperçu de l'image</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="commentaire-recherche" class="block font-medium text-gray-700">Commentaire :</label>
+                        <textarea id="commentaire-recherche" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue"></textarea>
+                    </div>
+                </section>
+            </div>
+
+            <div id="tab-4" class="tab-panel hidden">
+                <section class="report-section bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-semibold mb-4 border-b pb-2 border-moov-blue text-moov-blue">4. Localisation du Point de Coupure</h3>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block font-medium text-gray-700">Image du Point de Coupure</label>
+                            <input type="file" accept="image/*" class="mt-1 block w-full text-sm" onchange="previewImage(event, 'img-preview-coupure-1'); saveFormData();">
+                            <div class="image-preview-container">
+                                <img id="img-preview-coupure-1" class="image-preview" alt="Aperçu Point de Coupure">
+                                <span id="img-preview-coupure-1-placeholder" class="image-preview-placeholder">Aperçu de l'image</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block font-medium text-gray-700">Image Environnement de la Coupure</label>
+                            <input type="file" accept="image/*" class="mt-1 block w-full text-sm" onchange="previewImage(event, 'img-preview-coupure-2'); saveFormData();">
+                            <div class="image-preview-container">
+                                <img id="img-preview-coupure-2" class="image-preview" alt="Aperçu Environnement Coupure">
+                                <span id="img-preview-coupure-2-placeholder" class="image-preview-placeholder">Aperçu de l'image</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="cause-coupure" class="block font-medium text-gray-700">Cause de la Coupure :</label>
+                        <textarea id="cause-coupure" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue"></textarea>
+                    </div>
+                </section>
+            </div>
+
+            <div id="tab-5" class="tab-panel hidden">
+                <section class="report-section bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-semibold mb-4 border-b pb-2 border-moov-blue text-moov-blue">5. Action de Correction</h3>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block font-medium text-gray-700">Image Tirage Baguette/Jarretierre 1</label>
+                            <input type="file" accept="image/*" class="mt-1 block w-full text-sm" onchange="previewImage(event, 'img-preview-tirage-1'); saveFormData();">
+                            <div class="image-preview-container">
+                                <img id="img-preview-tirage-1" class="image-preview" alt="Aperçu Tirage 1">
+                                <span id="img-preview-tirage-1-placeholder" class="image-preview-placeholder">Aperçu de l'image</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block font-medium text-gray-700">Image Tirage Baguette/Jarretierre 2</label>
+                            <input type="file" accept="image/*" class="mt-1 block w-full text-sm" onchange="previewImage(event, 'img-preview-tirage-2'); saveFormData();">
+                            <div class="image-preview-container">
+                                <img id="img-preview-tirage-2" class="image-preview" alt="Aperçu Tirage 2">
+                                <span id="img-preview-tirage-2-placeholder" class="image-preview-placeholder">Aperçu de l'image</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="quantitatif-cable" class="block font-medium text-gray-700">Quantitatif Câble :</label>
+                            <input type="text" id="quantitatif-cable" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                        </div>
+                        <div>
+                            <label for="boitier-raccordement" class="block font-medium text-gray-700">Boîtier de Raccordement :</label>
+                            <input type="text" id="boitier-raccordement" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div id="tab-6" class="tab-panel hidden">
+                <section class="report-section bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-semibold mb-4 border-b pb-2 border-moov-blue text-moov-blue">6. Raccordement et Manchons</h3>
+                    
+                    <div class="mb-6 border-b pb-4">
+                        <h4 class="text-lg font-medium mb-2 text-moov-blue">Manchon 1</h4>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="block font-medium text-gray-700">Image Préparation Manchon 1</label>
+                                <input type="file" accept="image/*" class="mt-1 block w-full text-sm" onchange="previewImage(event, 'img-preview-manchon1-prep'); saveFormData();">
+                                <div class="image-preview-container">
+                                    <img id="img-preview-manchon1-prep" class="image-preview" alt="Aperçu Prépa Manchon 1">
+                                    <span id="img-preview-manchon1-prep-placeholder" class="image-preview-placeholder">Aperçu de l'image</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block font-medium text-gray-700">Image Raccordement Manchon 1</label>
+                                <input type="file" accept="image/*" class="mt-1 block w-full text-sm" onchange="previewImage(event, 'img-preview-manchon1-racc'); saveFormData();">
+                                <div class="image-preview-container">
+                                    <img id="img-preview-manchon1-racc" class="image-preview" alt="Aperçu Racc Manchon 1">
+                                    <span id="img-preview-manchon1-racc-placeholder" class="image-preview-placeholder">Aperçu de l'image</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="manchon1-long" class="block font-medium text-gray-700">Longitude :</label>
+                                <input type="text" id="manchon1-long" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                            </div>
+                            <div>
+                                <label for="manchon1-lat" class="block font-medium text-gray-700">Latitude :</label>
+                                <input type="text" id="manchon1-lat" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="manchon1-type" class="block font-medium text-gray-700">Type de Raccordement :</label>
+                                <input type="text" id="manchon1-type" placeholder="ex: FOTAG & FRANCETELECOM" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-6 border-b pb-4">
+                        <h4 class="text-lg font-medium text-moov-blue">Manchon 2</h4>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6">
+                            <div>
+                                <label class="block font-medium text-gray-700">Image Préparation Manchon 2</label>
+                                <input type="file" accept="image/*" class="mt-1 block w-full text-sm" onchange="previewImage(event, 'img-preview-manchon2-prep'); saveFormData();">
+                                <div class="image-preview-container">
+                                    <img id="img-preview-manchon2-prep" class="image-preview" alt="Aperçu Prépa Manchon 2">
+                                    <span id="img-preview-manchon2-prep-placeholder" class="image-preview-placeholder">Aperçu de l'image</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block font-medium text-gray-700">Image Raccordement Manchon 2</label>
+                                <input type="file" accept="image/*" class="mt-1 block w-full text-sm" onchange="previewImage(event, 'img-preview-manchon2-racc'); saveFormData();">
+                                <div class="image-preview-container">
+                                    <img id="img-preview-manchon2-racc" class="image-preview" alt="Aperçu Racc Manchon 2">
+                                    <span id="img-preview-manchon2-racc-placeholder" class="image-preview-placeholder">Aperçu de l'image</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="manchon2-long" class="block font-medium text-gray-700">Longitude :</label>
+                                <input type="text" id="manchon2-long" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                            </div>
+                            <div>
+                                <label for="manchon2-lat" class="block font-medium text-gray-700">Latitude :</label>
+                                <input type="text" id="manchon2-lat" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label for="manchon2-type" class="block font-medium text-gray-700">Type de Raccordement :</label>
+                                <input type="text" id="manchon2-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bloc Chambre (SUPPRIMÉ) -->
+                    <!-- L'utilisateur a demandé la suppression de la section chambre-section -->
+
+                    </section>
+            </div>
+            
+            <div id="tab-7" class="tab-panel hidden">
+                <section class="report-section bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-semibold mb-4 border-b pb-2 border-moov-blue text-moov-blue">7. Environnement Après Travaux</h3>
+                    <div>
+                        <label class="block font-medium text-gray-700">Image Environnement Après Travaux</label>
+                        <input type="file" accept="image/*" class="mt-1 block w-full text-sm" onchange="previewImage(event, 'img-preview-apres-travaux'); saveFormData();">
+                        <div class="image-preview-container">
+                            <img id="img-preview-apres-travaux" class="image-preview" alt="Aperçu Après Travaux">
+                            <span id="img-preview-apres-travaux-placeholder" class="image-preview-placeholder">Aperçu de l'image</span>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div id="tab-8" class="tab-panel hidden">
+                <section class="report-section bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-semibold mb-4 border-b pb-2 border-moov-blue text-moov-blue">8. Bilan de l'Intervention</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="bilan-liaison" class="block font-medium text-gray-700">Liaison ODF :</label>
+                            <input type="text" id="bilan-liaison" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-white text-black" readonly>
+                        </div>
+                        <div></div> 
+                        
+                        <div>
+                            <label for="bilan-distance-fo" class="block font-medium text-gray-700">Distance FO :</label>
+                            <input type="text" id="bilan-distance-fo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                        </div>
+                        <div>
+                            <label for="bilan-bpe" class="block font-medium text-gray-700">Nombre de BPE :</label>
+                            <input type="text" id="bilan-bpe" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                        </div>
+                        <div>
+                            <label for="bilan-baguette" class="block font-medium text-gray-700">Quantité Baguette :</label>
+                            <input type="text" id="bilan-baguette" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                        </div>
+                        <div>
+                            <label for="bilan-poteau" class="block font-medium text-gray-700">Poteau Métalique/Béton Implanté :</label>
+                            <input type="text" id="bilan-poteau" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                        </div>
+                        <div>
+                            <label for="bilan-services" class="block font-medium text-gray-700">Services Impactés lors de la coupure :</label>
+                            <input type="text" id="bilan-services" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue">
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <div id="tab-9" class="tab-panel hidden">
+                <section class="report-section bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-semibold mb-4 border-b pb-2 border-moov-blue text-moov-blue">9. Conclusion Générale de l'Activité</h3>
+                    <p class="text-base text-gray-600 mb-4">À la suite de notre activité sur le tronçon, il ressort les éléments suivants :</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="conclusion-constat" class="block font-medium text-gray-700">Constat :</label>
+                            <textarea id="conclusion-constat" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue"></textarea>
+                        </div>
+                        <div>
+                            <label for="conclusion-action-envisager" class="block font-medium text-gray-700">Action à Envisager :</label>
+                            <textarea id="conclusion-action-envisager" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue"></textarea>
+                        </div>
+                        <div>
+                            <label for="conclusion-action-realise" class="block font-medium text-gray-700">Actions Réalisées :</label>
+                            <textarea id="conclusion-action-realise" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue"></textarea>
+                        </div>
+                        <div>
+                            <label for="conclusion-remarques" class="block font-medium text-gray-700">Remarques :</label>
+                            <textarea id="conclusion-remarques" rows="5" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-moov-blue focus:ring-moov-blue"></textarea>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            
+            <!-- ... Fin des 9 onglets ... -->
+        </div>
+
+        <footer class="mt-8 flex justify-between nav-buttons">
+            <button
+                onclick="navigateTab(-1)"
+                id="prev-button"
+                class="bg-gray-500 hover-bg-gray-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out w-1/3"
+                disabled>
+                ← PRÉCÉDENT
+            </button>
+            <button
+                onclick="window.print()"
+                id="print-button"
+                class="print-button bg-moov-orange hover-bg-moov-orange text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out w-1/3 mx-2"
+                style="display: none;">
+                🖨️ Générer PDF / Imprimer le Rapport
+            </button>
+             <button
+                onclick="showResetConfirmation()"
+                class="reset-button bg-moov-red hover-bg-moov-red text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out w-1/3"
+                >
+                🗑️ Réinitialiser
+            </button>
+            <button
+                onclick="navigateTab(1)"
+                id="next-button"
+                class="bg-moov-blue hover-bg-moov-orange text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out w-1/3">
+                SUIVANT →
+            </button>
+            <button
+                onclick="generateAndOpenBOQPage()"
+                id="next-boq-button"
+                class="bg-moov-blue hover-bg-moov-orange text-white font-bold py-3 px-6 rounded-lg shadow-lg transition duration-300 ease-in-out w-1/3"
+                style="display: none;">
+                OUVRIR LE GÉNÉRATEUR BOQ →
+            </button>
+        </footer>
+    </div>
+    
+    <!-- Custom Modal for Confirmation/Alert -->
+    <div id="custom-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h4 id="modal-title" class="text-xl font-bold mb-4 text-gray-800"></h4>
+            <p id="modal-message" class="mb-6 text-gray-600"></p>
+            <div id="modal-actions" class="flex justify-center space-x-4">
+                <!-- Actions buttons will be injected by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'incidentReportData';
+        // 9 étapes seulement, la 10e est le BOQ externe
+        const TAB_IDS = ['tab-1', 'tab-2', 'tab-3', 'tab-4', 'tab-5', 'tab-6', 'tab-7', 'tab-8', 'tab-9']; 
+        const STEP_TITLES = [
+            "1. Informations Générales", 
+            "2. Mesure sur Site", 
+            "3. Recherche du Point de Coupure", 
+            "4. Localisation du Point de Coupure", 
+            "5. Action de Correction", 
+            "6. Raccordement et Manchons", 
+            "7. Environnement Après Travaux", 
+            "8. Bilan de l'Intervention", 
+            "9. Conclusion Générale de l'Activité"
+        ];
+        let currentTabIndex = 0;
+        let PROFORMA_REFERENCE_ID = localStorage.getItem('proformaReferenceId') || null;
+
+        /* ======================================================================
+           FONCTIONS MODALES (Remplacement de alert/confirm)
+           ====================================================================== */
+        function showModal(title, message, isConfirm, onConfirm) {
+            const modal = document.getElementById('custom-modal');
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = message;
+            const actions = document.getElementById('modal-actions');
+            actions.innerHTML = ''; 
+
+            if (isConfirm) {
+                // Bouton Annuler
+                const cancelButton = document.createElement('button');
+                cancelButton.className = 'bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded-lg transition';
+                cancelButton.textContent = 'Annuler';
+                cancelButton.onclick = () => modal.classList.add('hidden');
+                actions.appendChild(cancelButton);
+
+                // Bouton Confirmer
+                const confirmButton = document.createElement('button');
+                confirmButton.className = 'bg-moov-red hover:bg-moov-red text-white font-bold py-2 px-4 rounded-lg transition';
+                confirmButton.textContent = 'Confirmer';
+                confirmButton.onclick = () => {
+                    modal.classList.add('hidden');
+                    if (onConfirm) onConfirm();
+                };
+                actions.appendChild(confirmButton);
+            } else {
+                // Bouton OK pour les alertes
+                const okButton = document.createElement('button');
+                okButton.className = 'bg-moov-blue hover-bg-moov-orange text-white font-bold py-2 px-4 rounded-lg transition';
+                okButton.textContent = 'OK';
+                okButton.onclick = () => modal.classList.add('hidden');
+                actions.appendChild(okButton);
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function showResetConfirmation() {
+            showModal(
+                "Confirmation de Réinitialisation",
+                "Êtes-vous sûr de vouloir réinitialiser le formulaire ? Toutes les données sauvegardées localement seront effacées.",
+                true,
+                resetFormConfirmed
+            );
+        }
+
+        function resetFormConfirmed() {
+            document.querySelectorAll('#report-form input, #report-form textarea, #report-form select').forEach(element => {
+                if (element.type !== 'file' && !element.hasAttribute('readonly')) {
+                    element.value = '';
+                }
+            });
+
+            localStorage.removeItem(STORAGE_KEY);
+            localStorage.removeItem('proformaReferenceId'); 
+            PROFORMA_REFERENCE_ID = null;
+            
+            document.querySelectorAll('.image-preview').forEach(img => { img.src = ''; });
+            document.querySelectorAll('input[type="file"]').forEach(fileInput => { fileInput.value = ''; });
+
+            document.getElementById('entreprise').value = "ITC Ivoire Techno Com"; 
+            
+            currentTabIndex = 0;
+            updateBilan();
+            updateTabDisplay();
+            
+            showModal("Succès", "Formulaire réinitialisé !", false);
+        }
+        
+        /* ======================================================================
+           FONCTIONS DE NAVIGATION ET D'AFFICHAGE
+           ====================================================================== */
+
+        function updateTabDisplay() {
+            document.querySelectorAll('.tab-panel').forEach((panel, index) => {
+                panel.classList.toggle('hidden', index !== currentTabIndex);
+            });
+
+            document.getElementById('current-step-title').textContent = STEP_TITLES[currentTabIndex];
+            
+            // Gestion des boutons de navigation
+            document.getElementById('prev-button').disabled = currentTabIndex === 0;
+            const nextButton = document.getElementById('next-button');
+            const nextBoqButton = document.getElementById('next-boq-button');
+            const printButton = document.getElementById('print-button');
+            
+            if (currentTabIndex === TAB_IDS.length - 1) { // Dernière étape (Conclusion: index 8)
+                nextButton.style.display = 'none';
+                nextBoqButton.style.display = 'block';
+                printButton.style.display = 'block'; 
+            } else {
+                nextButton.style.display = 'block';
+                nextBoqButton.style.display = 'none';
+                printButton.style.display = 'none';
+            }
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function navigateTab(direction) {
+            const newIndex = currentTabIndex + direction;
+            if (newIndex >= 0 && newIndex < TAB_IDS.length) {
+                currentTabIndex = newIndex;
+                updateTabDisplay();
+                saveFormData(); 
+            }
+        }
+
+        /**
+         * Ouvre la page BOQ dans un nouvel onglet.
+         */
+        function generateAndOpenBOQPage() {
+            // Sauvegarde de l'état actuel du rapport avant d'ouvrir la page BOQ
+            saveFormData();
+            
+            // Ouvre le fichier BOQ distinct
+            const boqURL = 'boq_generator.html'; 
+            window.open(boqURL, '_blank');
+        }
+
+        function toggleOtherZoneField() {
+            const select = document.getElementById('zone-maintenance');
+            const autreContainer = document.getElementById('zone-maintenance-autre-container');
+
+            if (select.value === 'AUTRE') {
+                autreContainer.style.display = 'block';
+            } else {
+                autreContainer.style.display = 'none';
+                document.getElementById('zone-maintenance-autre').value = ''; 
+            }
+        }
+
+        /* ======================================================================
+           FONCTIONS DE CALCUL ET DE MISE À JOUR DYNAMIQUE
+           ====================================================================== */
+           
+        function generateProformaReference() {
+            const liaisonNameInput = document.getElementById('liaison-nom');
+            const liaisonName = liaisonNameInput ? liaisonNameInput.value.trim().replace(/[^a-zA-Z0-9]/g, '').toUpperCase() : 'NOLIAISON';
+            
+            if (liaisonName.length > 0 && !PROFORMA_REFERENCE_ID) {
+                const date = new Date();
+                const dateStr = date.getFullYear().toString() + 
+                                (date.getMonth() + 1).toString().padStart(2, '0') + 
+                                date.getDate().toString().padStart(2, '0');
+                const timeStr = date.getHours().toString().padStart(2, '0') + 
+                                date.getMinutes().toString().padStart(2, '0') +
+                                date.getSeconds().toString().padStart(2, '0');
+                
+                const newRef = `PROFORMA_${liaisonName}_${dateStr}_${timeStr}`;
+                
+                PROFORMA_REFERENCE_ID = newRef;
+                localStorage.setItem('proformaReferenceId', PROFORMA_REFERENCE_ID);
+            }
+        }
+        
+        function calculateCoupureToRemonteeDelay() {
+            const dateCoupure = document.getElementById('date-coupure').value;
+            const heureCoupure = document.getElementById('heure-coupure').value;
+            const dateRemontee = document.getElementById('date-remontee').value;
+            const heureRemontee = document.getElementById('heure-remontee').value;
+            
+            const delayInput = document.getElementById('delay-coupure-remontee');
+            const delayIcon = document.getElementById('delay-icon-ttr');
+            
+            delayInput.classList.remove('text-green-600', 'text-red-600');
+            delayIcon.classList.remove('text-green-600', 'text-red-600');
+            delayIcon.textContent = '';
+
+
+            if (!dateCoupure || !heureCoupure || !dateRemontee || !heureRemontee) {
+                delayInput.value = "N/A";
+                return;
+            }
+
+            const startDateTime = new Date(`${dateCoupure}T${heureCoupure}:00`);
+            const endDateTime = new Date(`${dateRemontee}T${heureRemontee}:00`);
+            const MAX_DELAY_MS = 4 * 60 * 60 * 1000; 
+
+            if (isNaN(startDateTime) || isNaN(endDateTime) || startDateTime > endDateTime) {
+                delayInput.value = "Erreur de date/heure";
+                delayInput.classList.add('text-red-600'); 
+                delayIcon.textContent = '❌'; 
+                delayIcon.classList.add('text-red-600');
+                return;
+            }
+
+            const diffMs = endDateTime - startDateTime; 
+            const diffMinutes = Math.floor(diffMs / (1000 * 60)); 
+
+            const diffHours = Math.floor(diffMinutes / 60);
+            const remainingMinutes = diffMinutes % 60;
+            
+            delayInput.value = `${diffHours}h ${remainingMinutes}min`;
+            
+            if (diffMs <= MAX_DELAY_MS) {
+                delayInput.classList.add('text-green-600');
+                delayIcon.textContent = '✅'; 
+                delayIcon.classList.add('text-green-600');
+            } else {
+                delayInput.classList.add('text-red-600');
+                delayIcon.textContent = '❌'; 
+                delayIcon.classList.add('text-red-600');
+            }
+        }
+
+        function updateBilan() {
+            const liaisonName = document.getElementById('liaison-nom') ? document.getElementById('liaison-nom').value.trim().toUpperCase() : '';
+            
+            document.title = (liaisonName !== '') ? `Rapport Incident - ${liaisonName}` : "Générateur de Rapport d'Incident";
+                
+            const bilanLiaisonInput = document.getElementById('bilan-liaison');
+            if (bilanLiaisonInput) bilanLiaisonInput.value = liaisonName;
+            
+            const dynamicDisplay = document.getElementById('dynamic-liaison-display');
+            if (dynamicDisplay) dynamicDisplay.textContent = liaisonName;
+
+            const dynamicLabel = document.getElementById('dynamic-liaison-label');
+            if (dynamicLabel) {
+                dynamicLabel.textContent = liaisonName ? `Liaison impactée : ${liaisonName}` : `Liaison impactée : N/A`;
+            }
+
+            generateProformaReference();
+            calculateCoupureToRemonteeDelay();
+        }
+
+
+        /* ======================================================================
+           FONCTIONS DE PERSISTENCE (LocalStorage)
+           ====================================================================== */
+
+        function previewImage(event, imgElementId) {
+            const input = event.target;
+            const imgPreview = document.getElementById(imgElementId);
+            const placeholder = document.getElementById(imgElementId + '-placeholder');
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imgPreview.src = e.target.result;
+                    imgPreview.style.display = 'block';
+                    if (placeholder) placeholder.style.display = 'none';
+                }
+                reader.readAsDataURL(input.files[0]);
+            } else {
+                imgPreview.src = '';
+                imgPreview.style.display = 'none';
+                if (placeholder) placeholder.style.display = 'block';
+            }
+        }
+
+        function saveFormData() {
+            const formData = {};
+            const formElements = document.querySelectorAll('#report-form input, #report-form textarea, #report-form select');
+            
+            formElements.forEach(element => {
+                if (element.id && !element.hasAttribute('readonly')) {
+                    formData[element.id] = element.value;
+                }
+            });
+            
+            formData['currentTabIndex'] = currentTabIndex;
+
+            document.querySelectorAll('.image-preview').forEach(img => {
+                if (img.id && img.src.startsWith('data:')) {
+                    formData[img.id] = img.src;
+                }
+            });
+
+            if(PROFORMA_REFERENCE_ID) {
+                localStorage.setItem('proformaReferenceId', PROFORMA_REFERENCE_ID);
+            }
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(formData));
+        }
+
+        function loadFormData() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (!savedData) return;
+
+            const formData = JSON.parse(savedData);
+            
+            currentTabIndex = formData.currentTabIndex !== undefined ? formData.currentTabIndex : 0;
+
+            PROFORMA_REFERENCE_ID = localStorage.getItem('proformaReferenceId');
+            
+            for (const id in formData) {
+                const element = document.getElementById(id);
+                if (element && (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA' || element.tagName === 'SELECT') && !element.hasAttribute('readonly')) {
+                    element.value = formData[id];
+                }
+            }
+
+            document.querySelectorAll('.image-preview').forEach(img => {
+                const imgDataUrl = formData[img.id];
+                const placeholder = document.getElementById(img.id + '-placeholder');
+                if (imgDataUrl && imgDataUrl.startsWith('data:')) {
+                    img.src = imgDataUrl;
+                    img.style.display = 'block';
+                    if (placeholder) placeholder.style.display = 'none';
+                }
+            });
+
+            const zoneSelect = document.getElementById('zone-maintenance');
+            if (zoneSelect) {
+                 toggleOtherZoneField();
+            }
+
+            updateBilan(); 
+        }
+
+        /* ======================================================================
+           INITIALISATION
+           ====================================================================== */
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFormData();
+            updateTabDisplay(); 
+        });
+
+    </script>
+
+</body>
+</html>
