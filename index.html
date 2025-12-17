@@ -1081,8 +1081,9 @@ Abidjan, Plateau</textarea
                 </button>
                 <div class="grid grid-cols-2 gap-3">
                   <button
-                    onclick="generatePDF('PROFORMA', document.getElementById('inv-num').value)"
-                    class="bg-slate-800 text-white p-3 rounded font-bold"
+                    id="btn-pdf-editor"
+                    onclick="generatePDF(document.getElementById('report-type').value, document.getElementById('inp_liaison').value)"
+                    class="bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition"
                   >
                     <i class="fas fa-file-pdf mr-2"></i>PDF
                   </button>
@@ -1798,13 +1799,7 @@ Abidjan, Plateau</textarea
           c.innerHTML += `<input type="hidden" id="inp_report_code" value="${newCode}">`;
         }
 
-        addInp(
-          c,
-          "date_rapport",
-          "Date",
-          "date",
-          new Date().toISOString().split("T")[0]
-        );
+        addInp(c, "liaison", "Liaison", "text");
         c.innerHTML += `<div class="grid grid-cols-2 gap-2"><div><label class="text-[10px] font-bold text-slate-400 uppercase">Zone</label><select id="inp_zone" class="form-input font-bold" onchange="renderPreview()"><option>Abidjan</option><option>Intérieur</option></select></div><div><label class="text-[10px] font-bold text-slate-400 uppercase">Ville</label><input id="inp_ville" class="form-input" oninput="renderPreview()"></div></div>`;
         const teamOptions = [
           "ITC_TEAM_ABJIDAN_1",
@@ -1914,6 +1909,18 @@ Abidjan, Plateau</textarea
         }
 
         renderPreview();
+        // Dans la fonction renderForm(), ajoutez ces lignes :
+        addSection(c, "Localisation");
+        const locDiv = document.createElement("div");
+        locDiv.className = "flex gap-2 mb-4";
+        locDiv.innerHTML = `
+    <input type="text" id="inp_gps" class="form-input flex-1" placeholder="Coordonnées GPS (Lat, Long)" readonly>
+    <button onclick="getLocation()" type="button" class="bg-green-600 text-white px-4 rounded-lg hover:bg-green-500 transition">
+        <i class="fas fa-map-marker-alt"></i>
+    </button>
+`;
+        c.appendChild(locDiv);
+        addInp(c, "adresse_auto", "Adresse détectée", "text", "");
 
         // À ajouter juste avant la fin de renderForm()
         document
@@ -1923,6 +1930,60 @@ Abidjan, Plateau</textarea
           .forEach((input) => {
             input.addEventListener("input", saveDraft);
           });
+      }
+
+      function getLocation() {
+        const btn = event.currentTarget;
+        const originalContent = btn.innerHTML;
+        const gpsInput = document.getElementById("inp_gps");
+        const addrInput = document.getElementById("inp_adresse_auto");
+
+        if (!navigator.geolocation) {
+          alert("La géolocalisation n'est pas supportée par votre navigateur.");
+          return;
+        }
+
+        // Effet visuel de chargement
+        btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
+        btn.disabled = true;
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude.toFixed(6);
+            const lon = position.coords.longitude.toFixed(6);
+
+            // 1. Remplir le champ GPS
+            gpsInput.value = `${lat}, ${lon}`;
+
+            // 2. Récupérer l'adresse (Reverse Geocoding gratuit via Nominatim)
+            fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`
+            )
+              .then((response) => response.json())
+              .then((data) => {
+                if (data.display_name) {
+                  addrInput.value = data.display_name;
+                }
+                renderPreview(); // Mettre à jour l'aperçu PDF
+              })
+              .catch((err) => console.error("Erreur adresse:", err))
+              .finally(() => {
+                btn.innerHTML = originalContent;
+                btn.disabled = false;
+                renderPreview();
+              });
+          },
+          (error) => {
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+            let msg = "Erreur de localisation.";
+            if (error.code === 1)
+              msg =
+                "Veuillez autoriser l'accès à la position dans votre navigateur.";
+            alert(msg);
+          },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
       }
 
       function renderPreview() {
@@ -2604,51 +2665,87 @@ Abidjan, Plateau</textarea
         return s.trim().replace(/\s{2,}/g, " ");
       }
 
-      function generatePDF(reportType, reportCode) {
+      // FONCTION PDF UNIQUE ET CORRIGÉE
+      function generatePDF(type, liaisonName) {
         const { jsPDF } = window.jspdf;
-        const element = document.getElementById("report-pages-container");
+        const sourceElement = document.getElementById("report-pages-container");
+        const btn = document.getElementById("btn-pdf-editor");
 
-        // Sécurité : Si le code est introuvable, on en génère un par défaut
-        const finalCode =
-          reportCode || "ARCHIVE-" + Date.now().toString().slice(-4);
+        // Récupère dynamiquement la liaison si le paramètre est vide
+        const actualLiaison =
+          liaisonName ||
+          document.getElementById("inp_liaison")?.value ||
+          "Rapport";
 
-        if (!element || element.innerHTML.trim() === "") {
-          alert("Erreur : L'aperçu est vide ou non chargé.");
+        if (!sourceElement || sourceElement.innerHTML.trim() === "") {
+          alert("L'aperçu est vide.");
           return;
         }
 
-        // Effet visuel sur le bouton
-        const btn =
-          event?.currentTarget || document.querySelector("#btn-pdf-editor");
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
-        btn.disabled = true;
+        // Nettoyage du nom de fichier
+        const cleanLiaison = actualLiaison
+          .trim()
+          .replace(/[/\\?%*:|"<>]/g, "-");
 
-        html2canvas(element, {
+        btn.disabled = true;
+        const originalBtnText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
+
+        const pdf = new jsPDF({
+          orientation: "p",
+          unit: "mm",
+          format: "a4",
+          compress: true,
+        });
+
+        html2canvas(sourceElement, {
           scale: 2,
           useCORS: true,
           allowTaint: true,
+          backgroundColor: "#ffffff",
+          scrollY: -window.scrollY,
+          windowWidth: sourceElement.scrollWidth,
+          windowHeight: sourceElement.scrollHeight,
         })
           .then((canvas) => {
             const imgData = canvas.toDataURL("image/jpeg", 0.95);
-            const pdf = new jsPDF("p", "mm", "a4");
-
             const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+            const canvasWidth = canvas.width;
+            const canvasHeight = canvas.height;
+            const ratio = canvasWidth / pdfWidth;
+            const imgHeightInPdf = canvasHeight / ratio;
 
-            pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`${reportType.toUpperCase()}_${finalCode}.pdf`);
+            pdf.addImage(
+              imgData,
+              "JPEG",
+              0,
+              0,
+              pdfWidth,
+              imgHeightInPdf,
+              undefined,
+              "FAST"
+            );
 
-            btn.innerHTML = originalText;
+            // Sauvegarde avec le nom de la liaison
+            pdf.save(`${type.toUpperCase()}_${cleanLiaison}.pdf`);
+
             btn.disabled = false;
+            btn.innerHTML = originalBtnText;
           })
-          .catch((err) => {
-            console.error("Erreur PDF:", err);
-            btn.innerHTML = originalText;
+          .catch((e) => {
+            console.error("Erreur PDF:", e);
             btn.disabled = false;
+            btn.innerHTML = originalBtnText;
           });
       }
 
+      // Fonction de secours pour le bouton
+      function triggerPDF() {
+        const type = document.getElementById("report-type").value;
+        const liaison =
+          document.getElementById("inp_liaison")?.value || "Sans_Nom";
+        generatePDF(type, liaison);
+      }
       // --- INVOICE FUNCTIONS ---
       function startNewInvoice() {
         currentInvoiceIndex = null;
