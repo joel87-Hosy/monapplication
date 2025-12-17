@@ -924,6 +924,7 @@
                 </button>
                 <div class="grid grid-cols-2 gap-3">
                   <button
+                    id="btn-pdf-editor"
                     onclick="generatePDF(document.getElementById('report-type').value, document.getElementById('inp_report_code').value)"
                     class="bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition"
                   >
@@ -1913,6 +1914,15 @@ Abidjan, Plateau</textarea
         }
 
         renderPreview();
+
+        // À ajouter juste avant la fin de renderForm()
+        document
+          .querySelectorAll(
+            "#dynamic-form-fields input, #dynamic-form-fields textarea, #dynamic-form-fields select"
+          )
+          .forEach((input) => {
+            input.addEventListener("input", saveDraft);
+          });
       }
 
       function renderPreview() {
@@ -2268,6 +2278,11 @@ Abidjan, Plateau</textarea
           currentHeight += block.h;
         });
         container.appendChild(currentPageDiv);
+
+        // Sauvegarde automatique si c'est un nouveau rapport (pour éviter de corrompre les archives)
+        if (currentReportIndex === null) {
+          saveDraft();
+        }
       }
 
       function createNewPageDiv(num) {
@@ -2330,6 +2345,52 @@ Abidjan, Plateau</textarea
         } else {
           alert("Coordonnées GPS non disponibles pour ce rapport.");
         }
+      }
+
+      function exportCSV() {
+        // 1. Filtrer uniquement les rapports de type 'incident'
+        const incidents = APP_DATA.reports.filter(
+          (r) => r.summary.type === "incident"
+        );
+
+        if (incidents.length === 0) {
+          alert("Aucun incident à exporter.");
+          return;
+        }
+
+        // 2. Définir les en-têtes du fichier CSV
+        let csvContent = "Date;Code;Liaison;Intervenant;Statut;Cause;Details\n";
+
+        // 3. Parcourir les incidents pour créer les lignes
+        incidents.forEach((r) => {
+          const date = r.summary.date || "";
+          const code = r.data.inputs.inp_report_code || "N/A";
+          const liaison = (r.summary.liaison || "").replace(/;/g, ","); // Éviter les conflits de séparateur
+          const tech = (r.summary.intervenant || "").replace(/;/g, ",");
+          const statut = r.data.inputs.inp_statut || "-";
+          const cause = (r.data.inputs.inp_cause || "-").replace(/;/g, ",");
+          const details = (r.data.inputs.inp_cause_detail || "")
+            .replace(/;/g, ",")
+            .replace(/\n/g, " ");
+
+          csvContent += `${date};${code};${liaison};${tech};${statut};${cause};${details}\n`;
+        });
+
+        // 4. Création du fichier et téléchargement
+        const blob = new Blob([csvContent], {
+          type: "text/csv;charset=utf-8;",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute(
+          "download",
+          `EXPORT_INCIDENTS_ITC_${new Date().toISOString().split("T")[0]}.csv`
+        );
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
       }
 
       // --- TABLES RENDERING (MODIFIED FOR ICONS, CODE, INTERVENANT) ---
@@ -2397,42 +2458,57 @@ Abidjan, Plateau</textarea
             .reverse()
             .map((r) => {
               const globalIndex = APP_DATA.reports.indexOf(r);
-              const hasGps =
-                r.data.inputs.inp_pk_gps &&
-                r.data.inputs.inp_pk_gps.match(
-                  /(-?\d+\.\d+)[,\s]+(-?\d+\.\d+)/
-                );
               const code = r.data.inputs.inp_report_code || "N/A";
-              const intervenant = r.summary.intervenant || "";
+              const type = r.summary.type;
 
-              return `<tr class="hover:bg-slate-50">
-                    <td class="p-4 flex items-center gap-2"><i class="${getReportIcon(
-                      r.summary.type
-                    )} text-pink-600"></i> ${r.summary.date}</td>
-                    <td class="p-4 uppercase text-xs font-bold">${r.summary.type.replace(
+              return `<tr class="hover:bg-slate-50 border-b">
+                    <td class="p-4"><i class="${getReportIcon(
+                      type
+                    )} text-pink-600 mr-2"></i>${r.summary.date}</td>
+                    <td class="p-4 uppercase text-[10px] font-bold">${type.replace(
                       /_/g,
                       " "
                     )}</td>
                     <td class="p-4 text-xs">
                         <span class="font-bold text-pink-600">${code}</span><br>
-                        <span class="text-slate-500">${intervenant}</span>
+                        <span class="text-slate-500">${
+                          r.summary.intervenant
+                        }</span>
                     </td>
                     <td class="p-4 text-right">
                         <div class="flex gap-2 justify-end">
-                            <button onclick="loadReport(${globalIndex})" class="text-blue-600 hover:text-blue-800 p-1" title="Consulter/Modifier"><i class="fas fa-edit"></i></button>
-                            <button onclick="jumpToGPS(${globalIndex})" class="p-1 ${
-                hasGps
-                  ? "text-orange-600 hover:text-orange-800"
-                  : "text-gray-400 cursor-not-allowed"
-              }" ${
-                hasGps ? "" : "disabled"
-              } title="Afficher sur Carte"><i class="fas fa-map-marker-alt"></i></button>
-                            <button onclick="deleteReport(${globalIndex})" class="text-red-600 hover:text-red-800 p-1" title="Supprimer"><i class="fas fa-trash"></i></button>
+                            <button onclick="printDirectlyFromArchive(${globalIndex})" class="bg-slate-800 text-white px-3 py-1 rounded text-[10px] font-bold hover:bg-slate-700">
+                                <i class="fas fa-print mr-1"></i> PDF
+                            </button>
+                            
+                            <button onclick="loadReport(${globalIndex})" class="text-blue-600 hover:bg-blue-50 p-2 rounded" title="Modifier">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            
+                            <button onclick="deleteReport(${globalIndex})" class="text-red-600 hover:bg-red-50 p-2 rounded">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
                     </td>
                 </tr>`;
             })
             .join("");
+      }
+
+      // Nouvelle fonction pour imprimer sans ouvrir l'éditeur
+      async function printDirectlyFromArchive(index) {
+        // 1. Charger silencieusement les données dans l'aperçu
+        loadReport(index);
+
+        // 2. Attendre un court instant que le rendu HTML se fasse
+        setTimeout(() => {
+          const r = APP_DATA.reports[index];
+          const type = r.summary.type;
+          const code = r.data.inputs.inp_report_code;
+
+          // 3. Appeler votre fonction PDF existante
+          generatePDF(type, code);
+        }, 500);
       }
 
       // --- 1. PROFORMA UTILS - AMOUNT IN WORDS ---
@@ -2528,84 +2604,50 @@ Abidjan, Plateau</textarea
         return s.trim().replace(/\s{2,}/g, " ");
       }
 
-      // --- NOUVELLE FONCTION DE GÉNÉRATION PDF (UTILISE HTML2CANVAS + JSPDF) ---
       function generatePDF(reportType, reportCode) {
-        // 1. Détermine le conteneur cible (rapport ou proforma)
-        // On vérifie si le conteneur de rapport est caché pour savoir si on est en mode Facture
-        const container = document
-          .getElementById("view-editor")
-          .classList.contains("hidden")
-          ? document.getElementById("invoice-page")
-          : document.getElementById("report-pages-container");
+        const { jsPDF } = window.jspdf;
+        const element = document.getElementById("report-pages-container");
 
-        if (!container) {
-          alert("Erreur: Contenu à imprimer introuvable.");
+        // Sécurité : Si le code est introuvable, on en génère un par défaut
+        const finalCode =
+          reportCode || "ARCHIVE-" + Date.now().toString().slice(-4);
+
+        if (!element || element.innerHTML.trim() === "") {
+          alert("Erreur : L'aperçu est vide ou non chargé.");
           return;
         }
 
-        // Sélectionne toutes les pages A4 (éléments à convertir)
-        const pages = container.querySelectorAll(".a4-page") || [container];
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF("p", "mm", "a4");
+        // Effet visuel sur le bouton
+        const btn =
+          event?.currentTarget || document.querySelector("#btn-pdf-editor");
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
+        btn.disabled = true;
 
-        const A4_WIDTH_MM = 210;
-        const A4_HEIGHT_MM = 297;
+        html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+        })
+          .then((canvas) => {
+            const imgData = canvas.toDataURL("image/jpeg", 0.95);
+            const pdf = new jsPDF("p", "mm", "a4");
 
-        let pagesProcessed = 0;
-        const totalPromises = pages.length;
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-        alert("Début de la génération du PDF. Veuillez patienter...");
+            pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`${reportType.toUpperCase()}_${finalCode}.pdf`);
 
-        pages.forEach((page, index) => {
-          // Rendre le conteneur parent visible temporairement pour la capture
-          const parentPreview =
-            page.closest("#preview-panel") ||
-            page.closest("#invoice-preview-panel");
-          const originalOverflow = parentPreview.style.overflowY;
-          parentPreview.style.overflowY = "visible";
-
-          // Capturer le contenu de chaque page A4
-          html2canvas(page, {
-            scale: 2, // Haute résolution (très important pour le texte)
-            useCORS: true,
-            allowTaint: true,
-            scrollY: -window.scrollY, // Évite les problèmes de défilement
+            btn.innerHTML = originalText;
+            btn.disabled = false;
           })
-            .then((canvas) => {
-              parentPreview.style.overflowY = originalOverflow; // Rétablit l'overflow
-
-              pagesProcessed++;
-
-              // Convertit le canvas en image JPEG
-              const imgData = canvas.toDataURL("image/jpeg", 0.9);
-
-              if (index > 0) {
-                pdf.addPage(); // Ajoute une nouvelle page dans le document PDF
-              }
-
-              // Ajout de l'image de la page capturée au document PDF
-              pdf.addImage(imgData, "JPEG", 0, 0, A4_WIDTH_MM, A4_HEIGHT_MM);
-
-              // TÉLÉCHARGEMENT FINAL DU FICHIER
-              if (pagesProcessed === totalPromises) {
-                const filename = `${reportType.toUpperCase()}_${
-                  reportCode || Date.now()
-                }.pdf`;
-                pdf.save(filename); // C'est cette ligne qui génère le fichier .pdf
-                alert(
-                  "Le PDF a été généré et est en cours de téléchargement !"
-                );
-              }
-            })
-            .catch((error) => {
-              console.error("Erreur de génération PDF:", error);
-              alert(
-                `Erreur critique lors de la conversion de la page ${index + 1}.`
-              );
-            });
-        });
+          .catch((err) => {
+            console.error("Erreur PDF:", err);
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+          });
       }
-      // --- FIN DE LA NOUVELLE FONCTION DE GÉNÉRATION PDF ---
 
       // --- INVOICE FUNCTIONS ---
       function startNewInvoice() {
@@ -3170,80 +3212,98 @@ Abidjan, Plateau</textarea
             .join("");
       }
 
-      function loadInvoice(idx) {
-        const i = APP_DATA.invoices[idx];
-        currentInvoiceIndex = idx;
-        invItems = i.items;
+      // Fonction pour sauvegarder l'état actuel du formulaire en brouillon
+      function saveDraft() {
+        const draft = {
+          type: document.getElementById("report-type").value,
+          inputs: {},
+          boq: boqData,
+          surv: survData,
+          fiber: fiberData,
+          images: imagesData,
+        };
 
-        document.getElementById("inv-num").value = i.num || "";
-        document.getElementById("inv-date").value = i.date || "";
-        document.getElementById("inv-client").value =
-          i.client || "MOOV AFRICA CI\nAbidjan, Plateau";
-        document.getElementById("inv-status").value = i.status || "En attente";
-        document.getElementById("inv-ref").value = i.ref || "";
+        document.querySelectorAll('[id^="inp_"]').forEach((e) => {
+          draft.inputs[e.id] = e.value;
+        });
 
-        document.getElementById("inv-sign-client-name").value =
-          i.signClientName || "";
-        document.getElementById("inv-sign-client-func").value =
-          i.signClientFunc || "";
-        document.getElementById("inv-sign-itc-name").value =
-          i.signItcName || "Jean DUPONT";
-        document.getElementById("inv-sign-itc-func").value =
-          i.signItcFunc || "Manager Opérationnel";
-
-        upInv();
-        switchView("invoice");
+        localStorage.setItem("itc_report_draft", JSON.stringify(draft));
       }
+
+      // Fonction pour charger le brouillon au démarrage
+      function loadDraft() {
+        const saved = localStorage.getItem("itc_report_draft");
+        if (saved && currentReportIndex === null) {
+          // Seulement si c'est un NOUVEAU rapport
+          const draft = JSON.parse(saved);
+          if (
+            confirm(
+              "Vous avez un rapport en cours non sauvegardé. Voulez-vous le restaurer ?"
+            )
+          ) {
+            document.getElementById("report-type").value = draft.type;
+            boqData = draft.boq;
+            survData = draft.surv;
+            fiberData = draft.fiber;
+            imagesData = draft.images;
+
+            renderForm(); // Reconstruit le HTML dynamique
+
+            for (const [k, v] of Object.entries(draft.inputs)) {
+              if (document.getElementById(k))
+                document.getElementById(k).value = v;
+            }
+            renderPreview();
+          } else {
+            localStorage.removeItem("itc_report_draft");
+          }
+        }
+      }
+
+      // Modifier la fonction de sauvegarde finale pour vider le brouillon
+      const originalSaveReport = saveReport;
+      saveReport = function () {
+        originalSaveReport();
+        localStorage.removeItem("itc_report_draft"); // On vide le brouillon après succès
+      };
 
       function loadReport(idx) {
         const r = APP_DATA.reports[idx];
         currentReportIndex = idx;
+
+        // On définit le type
         document.getElementById("report-type").value = r.summary.type;
 
-        boqData = r.data.boq || [];
-        survData = r.data.surv || [];
-        surveillanceImages = r.data.survImages || [];
-        fiberData = r.data.fiber || r.data.prov || [];
+        // Reset des données globales
+        boqData = JSON.parse(JSON.stringify(r.data.boq || []));
+        survData = JSON.parse(JSON.stringify(r.data.surv || []));
+        fiberData = JSON.parse(JSON.stringify(r.data.fiber || []));
+        imagesData = JSON.parse(JSON.stringify(r.data.images || {}));
 
-        let loadedImages = {};
-        const savedImages = r.data.images || {};
-        const savedInputs = r.data.inputs || {};
-
-        for (const key in savedImages) {
-          let urls = [];
-          let comment = "";
-
-          if (Array.isArray(savedImages[key])) {
-            urls = savedImages[key].filter((url) => url);
-            comment = savedInputs[`inp_comment_${key}`] || "";
-          } else if (
-            typeof savedImages[key] === "object" &&
-            Array.isArray(savedImages[key].urls)
-          ) {
-            urls = savedImages[key].urls.filter((url) => url);
-            comment = savedImages[key].comment || "";
-          }
-
-          if (urls.length > 0 || comment) {
-            loadedImages[key] = { urls: urls, comment: comment };
-          }
-        }
-        imagesData = loadedImages;
-
+        // Reconstruction du formulaire
         renderForm();
 
-        for (const [k, v] of Object.entries(r.data.inputs))
-          if (document.getElementById(k)) document.getElementById(k).value = v;
-
-        for (const key in imagesData) {
-          const commentInput = document.getElementById(`inp_comment_${key}`);
-          if (commentInput) {
-            commentInput.value = imagesData[key].comment;
-          }
-          renderPhotoSectionEditor(key);
+        // Injection du code du rapport existant dans le formulaire (CRUCIAL)
+        const formFields = document.getElementById("dynamic-form-fields");
+        // On vérifie si l'input de code existe, sinon on le crée
+        if (!document.getElementById("inp_report_code")) {
+          const hiddenCode = document.createElement("input");
+          hiddenCode.type = "hidden";
+          hiddenCode.id = "inp_report_code";
+          formFields.appendChild(hiddenCode);
         }
+        document.getElementById("inp_report_code").value =
+          r.data.inputs.inp_report_code || "N/A";
 
-        renderPreview();
+        // Injection des autres valeurs
+        setTimeout(() => {
+          for (const [k, v] of Object.entries(r.data.inputs)) {
+            const el = document.getElementById(k);
+            if (el) el.value = v;
+          }
+          renderPreview();
+        }, 200);
+
         switchView("editor");
       }
 
@@ -3435,6 +3495,7 @@ Abidjan, Plateau</textarea
         .map((p) => `<option value="${p.desc}">`)
         .join("");
       checkAuth();
+      loadDraft();
     </script>
   </body>
 </html>
