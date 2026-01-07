@@ -1801,23 +1801,53 @@ Abidjan, Plateau</textarea
 
         addInp(c, "liaison", "Liaison", "text");
         c.innerHTML += `<div class="grid grid-cols-2 gap-2"><div><label class="text-[10px] font-bold text-slate-400 uppercase">Zone</label><select id="inp_zone" class="form-input font-bold" onchange="renderPreview()"><option>Abidjan</option><option>Intérieur</option></select></div><div><label class="text-[10px] font-bold text-slate-400 uppercase">Ville</label><input id="inp_ville" class="form-input" oninput="renderPreview()"></div></div>`;
+        // --- NOUVEAU CODE : MULTI-SÉLECTION ÉQUIPES ---
         const teamOptions = [
-          "ITC_TEAM_ABJIDAN_1",
-          "ITC_TEAM_ABJIDAN_2",
-          "ITC_TEAM_ABJIDAN_3",
-          "ITC_TEAM_ABJIDAN_4",
+          "ITC_TEAM_ABIDJAN_1",
+          "ITC_TEAM_ABIDJAN_2",
+          "ITC_TEAM_ABIDJAN_3",
+          "ITC_TEAM_ABIDJAN_4",
           "ITC_TEAM_YAMOUSSOUKRO",
           "ITC_TEAM_DALOA",
           "ITC_TEAM_MAN",
         ];
-        addInp(
-          c,
-          "intervenant",
-          "Intervenant",
-          "select",
-          teamOptions[0],
-          teamOptions
-        );
+
+        // Conteneur visuel
+        const interContainer = document.createElement("div");
+        interContainer.className =
+          "bg-slate-50 p-3 rounded-lg border border-slate-200 mb-4";
+        interContainer.innerHTML = `<label class="block text-[10px] font-bold text-slate-400 uppercase mb-2">Intervenants (Sélectionnez plusieurs)</label>`;
+
+        const gridTeams = document.createElement("div");
+        gridTeams.className = "grid grid-cols-1 gap-1";
+
+        // Récupérer les sélections existantes si on modifie un rapport
+        let selectedTeams = [];
+        if (currentReportIndex !== null) {
+          const val = APP_DATA.reports[currentReportIndex].summary.intervenant;
+          selectedTeams = val ? val.split(", ") : [];
+        }
+
+        teamOptions.forEach((team) => {
+          const isChecked = selectedTeams.includes(team) ? "checked" : "";
+          gridTeams.innerHTML += `
+        <label class="flex items-center gap-2 bg-white p-2 rounded border border-slate-100 hover:bg-pink-50 cursor-pointer transition text-[11px] font-bold">
+            <input type="checkbox" class="team-checkbox accent-pink-600 w-4 h-4" value="${team}" ${isChecked} onchange="updateTeamsValue()">
+            ${team}
+        </label>
+    `;
+        });
+
+        interContainer.appendChild(gridTeams);
+        // Input caché pour rester compatible avec votre système de sauvegarde existant
+        const hiddenInput = document.createElement("input");
+        hiddenInput.type = "hidden";
+        hiddenInput.id = "inp_intervenant";
+        interContainer.appendChild(hiddenInput);
+        c.appendChild(interContainer);
+
+        // Initialisation immédiate de la valeur
+        setTimeout(updateTeamsValue, 50);
         addInp(c, "liaison", "Liaison", "text");
 
         if (t === "incident") {
@@ -1874,7 +1904,19 @@ Abidjan, Plateau</textarea
           );
         } else if (t === "normalisation") {
           addInp(c, "ref_incident", "Réf. Incident Origine", "text");
-          c.innerHTML += `<div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">PK / GPS du site</label><div class="flex gap-2"><input id="inp_pk_gps" class="form-input mb-0" placeholder="ex: PK12 / 5.345, -4.123" oninput="renderPreview()"><button onclick="renderPreview()" class="bg-blue-600 text-white px-3 rounded text-xs font-bold whitespace-nowrap"><i class="fas fa-map-marker-alt"></i> Localiser</button></div></div>`;
+          // --- REMPLACEMENT DU BLOC PK / GPS (BOUTON BLEU) ---
+          const pkContainer = document.createElement("div");
+          pkContainer.className = "mb-4";
+          pkContainer.innerHTML = `
+    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">PK / GPS</label>
+    <div class="flex gap-2">
+        <input id="inp_pk_gps" class="form-input mb-0" placeholder="ex: PK12 / 5.345, -4.123" oninput="renderPreview()">
+        <button type="button" onclick="getQuickLocation(event)" class="bg-blue-600 text-white px-3 rounded-lg text-xs font-bold whitespace-nowrap hover:bg-blue-500 transition shadow-sm h-10">
+            <i class="fas fa-location-arrow mr-1"></i> Localiser
+        </button>
+    </div>
+`;
+          c.appendChild(pkContainer);
           addSection(c, "Comparatif");
           renderPhotoEditor(
             c,
@@ -1981,6 +2023,51 @@ Abidjan, Plateau</textarea
               msg =
                 "Veuillez autoriser l'accès à la position dans votre navigateur.";
             alert(msg);
+          },
+          { enableHighAccuracy: true, timeout: 10000 }
+        );
+      }
+
+      // Fonction miroir du bouton vert, adaptée pour le champ PK/GPS
+      function getQuickLocation(event) {
+        const btn = event.currentTarget;
+        const gpsInput = document.getElementById("inp_pk_gps");
+        const originalContent = btn.innerHTML;
+
+        if (!navigator.geolocation) {
+          alert("La géolocalisation n'est pas supportée par ce navigateur.");
+          return;
+        }
+
+        // Animation de chargement identique au bouton vert
+        btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>';
+        btn.disabled = true;
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude.toFixed(6);
+            const lon = position.coords.longitude.toFixed(6);
+
+            // Mise à jour du champ
+            gpsInput.value = `${lat}, ${lon}`;
+
+            // Feedback visuel de succès
+            btn.innerHTML = '<i class="fas fa-check"></i>';
+            btn.classList.replace("bg-blue-600", "bg-green-600");
+
+            setTimeout(() => {
+              btn.innerHTML = originalContent;
+              btn.classList.replace("bg-green-600", "bg-blue-600");
+              btn.disabled = false;
+            }, 2000);
+
+            renderPreview(); // Mise à jour du PDF
+            saveDraft(); // Sauvegarde auto
+          },
+          (error) => {
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+            alert("Erreur GPS : " + error.message);
           },
           { enableHighAccuracy: true, timeout: 10000 }
         );
@@ -3588,6 +3675,19 @@ Abidjan, Plateau</textarea
         .join("");
       checkAuth();
       loadDraft();
+
+      // Fonction de mise à jour globale pour la multi-sélection
+      function updateTeamsValue() {
+        const checkboxes = document.querySelectorAll(".team-checkbox:checked");
+        const selectedValues = Array.from(checkboxes).map((cb) => cb.value);
+        const hiddenInput = document.getElementById("inp_intervenant");
+
+        if (hiddenInput) {
+          hiddenInput.value = selectedValues.join(", ");
+          renderPreview(); // Met à jour l'aperçu PDF
+          saveDraft(); // Sauvegarde le brouillon auto
+        }
+      }
     </script>
   </body>
 </html>
