@@ -238,6 +238,114 @@
         margin-top: 4px;
         break-inside: avoid;
       }
+      /* Responsive tweaks */
+      @media (max-width: 1279px) {
+        /* Make the A4 preview fluid on smaller screens */
+        .a4-page {
+          width: calc(100% - 32px);
+          height: auto;
+          padding: 16px;
+          margin: 0 auto 18px auto;
+          box-shadow: none;
+        }
+        .header-logos-container {
+          position: relative;
+          top: auto;
+          left: auto;
+          right: auto;
+          height: auto;
+          padding: 8px 0;
+          justify-content: center;
+          gap: 12px;
+          pointer-events: none;
+        }
+        .header-logo-img {
+          height: 40px;
+        }
+        .page-number {
+          position: relative;
+          bottom: auto;
+          right: auto;
+          text-align: right;
+          margin-top: 8px;
+        }
+
+        /* Layout adjustments */
+        #app-wrapper {
+          flex-direction: column;
+        }
+        aside#app-sidebar {
+          width: 100% !important;
+          position: relative;
+          display: none;
+        }
+        aside#app-sidebar.active {
+          display: flex;
+          position: fixed;
+          left: 0;
+          top: 0;
+          height: 100%;
+          z-index: 60;
+        }
+        main {
+          width: 100%;
+        }
+
+        /* Panels stack on mobile */
+        #view-editor,
+        #view-invoice {
+          flex-direction: column;
+        }
+        #form-panel {
+          width: 100% !important;
+          position: relative;
+        }
+        #preview-panel,
+        #invoice-preview-panel {
+          width: 100% !important;
+          padding: 12px;
+        }
+
+        /* Make photo grids adapt */
+        .photo-grid {
+          grid-template-columns: 1fr 1fr;
+        }
+        .photo-grid-3 {
+          grid-template-columns: 1fr 1fr 1fr;
+        }
+        .photo-container,
+        .photo-container-small {
+          height: auto;
+        }
+        .photo-container img,
+        .photo-container-small img {
+          width: 100%;
+          height: auto;
+        }
+
+        .login-box {
+          width: 92%;
+          max-width: 420px;
+          padding: 1.5rem;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .cover-title {
+          font-size: 2rem;
+        }
+        .cover-liaison {
+          font-size: 1.2rem;
+          padding: 12px;
+        }
+        .cockpit-card {
+          padding: 12px;
+        }
+        .cockpit-icon-bg {
+          width: 40px;
+          height: 40px;
+        }
+      }
       .data-table th {
         background: #f1f5f9;
         border: 1px solid #cbd5e1;
