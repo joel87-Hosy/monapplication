@@ -1634,6 +1634,9 @@ Abidjan, Plateau</textarea
       let currentUser = null,
         currentReportIndex = null,
         currentInvoiceIndex = null;
+      let realtimeClockInterval = null;
+
+      currentInvoiceIndex = null;
       let boqData = [{ item: "", qty: "" }],
         imagesData = {},
         surveillanceImages = [],
@@ -2169,6 +2172,23 @@ Abidjan, Plateau</textarea
             "A vers B",
             "B vers A",
           ]);
+
+          // Date & Heure en temps réel
+          addSection(c, "Date & Heure");
+          addInp(
+            c,
+            "date_gc",
+            "Date du jour",
+            "text",
+            new Date().toLocaleDateString()
+          );
+          addInp(
+            c,
+            "time_gc",
+            "Heure (temps réel)",
+            "text",
+            new Date().toLocaleTimeString()
+          );
 
           addSection(c, "Parcours du Génie Civil");
           c.innerHTML += `<div id="gc-steps-editor" class="space-y-3"></div>
@@ -4000,6 +4020,12 @@ Abidjan, Plateau</textarea
         .join("");
       checkAuth();
       loadDraft();
+      // Start live clock for marche GC form
+      try {
+        startRealtimeClock();
+      } catch (e) {
+        /* ignore if not ready */
+      }
 
       // Fonction de mise à jour globale pour la multi-sélection
       function updateTeamsValue() {
@@ -4039,6 +4065,29 @@ Abidjan, Plateau</textarea
         } catch (e) {
           // ignore if called before full init
         }
+      }
+
+      // Démarre l'horloge en temps réel qui met à jour les champs date_gc et time_gc
+      function startRealtimeClock() {
+        if (realtimeClockInterval) return; // déjà lancé
+        function tick() {
+          const dEl = document.getElementById("inp_date_gc");
+          const tEl = document.getElementById("inp_time_gc");
+          const now = new Date();
+          if (dEl) dEl.value = now.toLocaleDateString();
+          if (tEl) tEl.value = now.toLocaleTimeString();
+        }
+        tick();
+        realtimeClockInterval = setInterval(() => {
+          try {
+            tick();
+            // Mettre à jour l'aperçu seulement si présent
+            if (document.getElementById("dynamic-form-fields")) renderPreview();
+            saveDraft();
+          } catch (e) {
+            // ignore
+          }
+        }, 1000);
       }
     </script>
   </body>
