@@ -2005,7 +2005,7 @@ Abidjan, Plateau</textarea
         }
 
         // À insérer dans renderForm() après les autres types
-        } else if (t === "marche_gc") {
+        if (t === "marche_gc") {
           addSection(c, "Points de Liaison");
           addInp(c, "site_a", "Point de départ A", "text");
           addInp(c, "gps_a", "Coordonnées GPS A", "text");
@@ -2026,8 +2026,8 @@ Abidjan, Plateau</textarea
           renderGCStepEditor();
 
           // Ajout des boutons spécifiques pour marche GC : Générer PDF & Sauvegarder
-          const btnsDiv = document.createElement('div');
-          btnsDiv.className = 'mt-3 flex gap-2';
+          const btnsDiv = document.createElement("div");
+          btnsDiv.className = "mt-3 flex gap-2";
           btnsDiv.innerHTML = `
             <button type="button" onclick="generatePDF('marche_gc', document.getElementById('inp_report_code')?.value)" class="w-1/2 bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition">
               <i class="fas fa-file-pdf mr-2"></i> Générer PDF
@@ -2040,10 +2040,10 @@ Abidjan, Plateau</textarea
 
           // Lier la mise à jour automatique du champ 'liaison' lorsque A/B ou GPS changent
           setTimeout(() => {
-            const ids = ['inp_site_a','inp_gps_a','inp_site_b','inp_gps_b'];
-            ids.forEach(id => {
+            const ids = ["inp_site_a", "inp_gps_a", "inp_site_b", "inp_gps_b"];
+            ids.forEach((id) => {
               const el = document.getElementById(id);
-              if (el) el.addEventListener('input', updateLiaison);
+              if (el) el.addEventListener("input", updateLiaison);
             });
             // initial update
             updateLiaison();
