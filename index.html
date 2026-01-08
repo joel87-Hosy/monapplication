@@ -2005,7 +2005,7 @@ Abidjan, Plateau</textarea
         }
 
         // À insérer dans renderForm() après les autres types
-        else if (t === "marche_gc") {
+        } else if (t === "marche_gc") {
           addSection(c, "Points de Liaison");
           addInp(c, "site_a", "Point de départ A", "text");
           addInp(c, "gps_a", "Coordonnées GPS A", "text");
@@ -2024,6 +2024,30 @@ Abidjan, Plateau</textarea
                               <i class="fas fa-plus-circle mr-1"></i> Ajouter Élément (Poteau/Chambre)
                           </button>`;
           renderGCStepEditor();
+
+          // Ajout des boutons spécifiques pour marche GC : Générer PDF & Sauvegarder
+          const btnsDiv = document.createElement('div');
+          btnsDiv.className = 'mt-3 flex gap-2';
+          btnsDiv.innerHTML = `
+            <button type="button" onclick="generatePDF('marche_gc', document.getElementById('inp_report_code')?.value)" class="w-1/2 bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition">
+              <i class="fas fa-file-pdf mr-2"></i> Générer PDF
+            </button>
+            <button type="button" onclick="saveReport()" class="w-1/2 bg-green-600 text-white p-3 rounded-lg font-bold text-sm hover:bg-green-500 transition">
+              <i class="fas fa-save mr-2"></i> Sauvegarder
+            </button>
+          `;
+          c.appendChild(btnsDiv);
+
+          // Lier la mise à jour automatique du champ 'liaison' lorsque A/B ou GPS changent
+          setTimeout(() => {
+            const ids = ['inp_site_a','inp_gps_a','inp_site_b','inp_gps_b'];
+            ids.forEach(id => {
+              const el = document.getElementById(id);
+              if (el) el.addEventListener('input', updateLiaison);
+            });
+            // initial update
+            updateLiaison();
+          }, 50);
         }
 
         renderPreview();
@@ -3835,6 +3859,33 @@ Abidjan, Plateau</textarea
           hiddenInput.value = selectedValues.join(", ");
           renderPreview(); // Met à jour l'aperçu PDF
           saveDraft(); // Sauvegarde le brouillon auto
+        }
+      }
+
+      // Met à jour automatiquement le champ 'liaison' pour la marche GC
+      function updateLiaison() {
+        const siteA = document.getElementById("inp_site_a")?.value || "";
+        const gpsA = document.getElementById("inp_gps_a")?.value || "";
+        const siteB = document.getElementById("inp_site_b")?.value || "";
+        const gpsB = document.getElementById("inp_gps_b")?.value || "";
+        const liaisonEl = document.getElementById("inp_liaison");
+
+        let text = "";
+        if (siteA || siteB) text = `${siteA} → ${siteB}`.trim();
+        if (gpsA || gpsB) {
+          const gpsText = `${gpsA || "..."} → ${gpsB || "..."}`;
+          text = text ? `${text} (${gpsText})` : `(${gpsText})`;
+        }
+
+        if (liaisonEl) {
+          liaisonEl.value = text;
+        }
+        // Mise à jour visuelle et sauvegarde brouillon
+        try {
+          renderPreview();
+          saveDraft();
+        } catch (e) {
+          // ignore if called before full init
         }
       }
     </script>
