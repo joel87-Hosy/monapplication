@@ -907,6 +907,7 @@
                     <option value="survey_terrain">SURVEY TERRAIN</option>
                     <option value="normalisation">NORMALISATION</option>
                     <option value="mise_a_dispo">MISE À DISPOSITION</option>
+                    <option value="marche_gc">MARCHE SUR GC</option>
                     <option value="otdr">MESURES OTDR</option>
                   </select>
                 </div>
@@ -1450,6 +1451,7 @@ Abidjan, Plateau</textarea
     <datalist id="price-list-options"></datalist>
 
     <script>
+      let gcData = []; // Pour stocker les étapes de la marche
       /* --- V45 ENGINE --- */
       let APP_DATA = {
         reports: JSON.parse(localStorage.getItem("itc_reports_v34")) || [],
@@ -1659,18 +1661,18 @@ Abidjan, Plateau</textarea
             return `<tr class="hover:bg-slate-50 ${
               isCurrentUser ? "bg-yellow-50 font-bold" : ""
             }">
-                          <td class="p-4">${u.user} ${
+                                <td class="p-4">${u.user} ${
               isCurrentUser ? "(Vous)" : ""
             }</td>
-                          <td class="p-4 uppercase text-xs">${u.role}</td>
-                          <td class="p-4 text-right">
-                              ${
-                                isProtected || isCurrentUser
-                                  ? `<span class="text-gray-400 text-xs">Protégé</span>`
-                                  : `<button onclick="deleteUser(${index})" class="text-red-600 hover:text-red-800 p-1" title="Supprimer"><i class="fas fa-trash"></i></button>`
-                              }
-                          </td>
-                      </tr>`;
+                                <td class="p-4 uppercase text-xs">${u.role}</td>
+                                <td class="p-4 text-right">
+                                    ${
+                                      isProtected || isCurrentUser
+                                        ? `<span class="text-gray-400 text-xs">Protégé</span>`
+                                        : `<button onclick="deleteUser(${index})" class="text-red-600 hover:text-red-800 p-1" title="Supprimer"><i class="fas fa-trash"></i></button>`
+                                    }
+                                </td>
+                            </tr>`;
           })
           .join("");
       }
@@ -1789,6 +1791,58 @@ Abidjan, Plateau</textarea
         switchView("editor");
       }
 
+      function renderGCStepEditor() {
+        const c = document.getElementById("gc-steps-editor");
+        if (!c) return;
+        c.innerHTML = gcData
+          .map(
+            (step, i) => `
+              <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 relative">
+                  <button onclick="gcData.splice(${i},1);renderGCStepEditor();renderPreview();" class="absolute top-1 right-1 text-red-500"><i class="fas fa-times-circle"></i></button>
+                  <div class="grid grid-cols-2 gap-2 mb-2">
+                      <select class="form-input text-xs font-bold" onchange="gcData[${i}].type=this.value;renderPreview()">
+                          <option value="Poteau" ${
+                            step.type === "Poteau" ? "selected" : ""
+                          }>Poteau</option>
+                          <option value="Chambre" ${
+                            step.type === "Chambre" ? "selected" : ""
+                          }>Chambre</option>
+                      </select>
+                      <input class="form-input text-xs" placeholder="État (ex: Bon, Cassé...)" value="${
+                        step.etat
+                      }" oninput="gcData[${i}].etat=this.value;renderPreview()">
+                  </div>
+                  <input type="file" class="text-[10px] w-full" onchange="handleGCImage(${i}, this)">
+                  ${
+                    step.img
+                      ? `<img src="${step.img}" class="h-16 w-full object-cover mt-2 rounded">`
+                      : ""
+                  }
+              </div>
+          `
+          )
+          .join("");
+      }
+
+      function addGCStep() {
+        gcData.push({ type: "Poteau", etat: "Bon", img: "" });
+        renderGCStepEditor();
+        renderPreview();
+      }
+
+      function handleGCImage(index, input) {
+        const file = input.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            gcData[index].img = e.target.result;
+            renderGCStepEditor();
+            renderPreview();
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+
       function renderForm() {
         const t = document.getElementById("report-type").value;
         const c = document.getElementById("dynamic-form-fields");
@@ -1831,11 +1885,11 @@ Abidjan, Plateau</textarea
         teamOptions.forEach((team) => {
           const isChecked = selectedTeams.includes(team) ? "checked" : "";
           gridTeams.innerHTML += `
-        <label class="flex items-center gap-2 bg-white p-2 rounded border border-slate-100 hover:bg-pink-50 cursor-pointer transition text-[11px] font-bold">
-            <input type="checkbox" class="team-checkbox accent-pink-600 w-4 h-4" value="${team}" ${isChecked} onchange="updateTeamsValue()">
-            ${team}
-        </label>
-    `;
+              <label class="flex items-center gap-2 bg-white p-2 rounded border border-slate-100 hover:bg-pink-50 cursor-pointer transition text-[11px] font-bold">
+                  <input type="checkbox" class="team-checkbox accent-pink-600 w-4 h-4" value="${team}" ${isChecked} onchange="updateTeamsValue()">
+                  ${team}
+              </label>
+          `;
         });
 
         interContainer.appendChild(gridTeams);
@@ -1908,14 +1962,14 @@ Abidjan, Plateau</textarea
           const pkContainer = document.createElement("div");
           pkContainer.className = "mb-4";
           pkContainer.innerHTML = `
-    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">PK / GPS</label>
-    <div class="flex gap-2">
-        <input id="inp_pk_gps" class="form-input mb-0" placeholder="ex: PK12 / 5.345, -4.123" oninput="renderPreview()">
-        <button type="button" onclick="getQuickLocation(event)" class="bg-blue-600 text-white px-3 rounded-lg text-xs font-bold whitespace-nowrap hover:bg-blue-500 transition shadow-sm h-10">
-            <i class="fas fa-location-arrow mr-1"></i> Localiser
-        </button>
-    </div>
-`;
+          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">PK / GPS</label>
+          <div class="flex gap-2">
+              <input id="inp_pk_gps" class="form-input mb-0" placeholder="ex: PK12 / 5.345, -4.123" oninput="renderPreview()">
+              <button type="button" onclick="getQuickLocation(event)" class="bg-blue-600 text-white px-3 rounded-lg text-xs font-bold whitespace-nowrap hover:bg-blue-500 transition shadow-sm h-10">
+                  <i class="fas fa-location-arrow mr-1"></i> Localiser
+              </button>
+          </div>
+      `;
           c.appendChild(pkContainer);
           addSection(c, "Comparatif");
           renderPhotoEditor(
@@ -1950,17 +2004,39 @@ Abidjan, Plateau</textarea
           addInp(c, "actions", "Actions / Recommandations", "textarea");
         }
 
+        // À insérer dans renderForm() après les autres types
+        else if (t === "marche_gc") {
+          addSection(c, "Points de Liaison");
+          addInp(c, "site_a", "Point de départ A", "text");
+          addInp(c, "gps_a", "Coordonnées GPS A", "text");
+          addInp(c, "site_b", "Point d'arrivée B", "text");
+          addInp(c, "gps_b", "Coordonnées GPS B", "text");
+
+          addSection(c, "Information sur la marche");
+          addInp(c, "sens_marche", "Sens de la marche", "select", "A vers B", [
+            "A vers B",
+            "B vers A",
+          ]);
+
+          addSection(c, "Parcours du Génie Civil");
+          c.innerHTML += `<div id="gc-steps-editor" class="space-y-3"></div>
+                          <button onclick="addGCStep()" class="w-full bg-blue-600 text-white p-2 rounded-lg font-bold text-xs mt-2">
+                              <i class="fas fa-plus-circle mr-1"></i> Ajouter Élément (Poteau/Chambre)
+                          </button>`;
+          renderGCStepEditor();
+        }
+
         renderPreview();
         // Dans la fonction renderForm(), ajoutez ces lignes :
         addSection(c, "Localisation");
         const locDiv = document.createElement("div");
         locDiv.className = "flex gap-2 mb-4";
         locDiv.innerHTML = `
-          <input type="text" id="inp_gps" class="form-input flex-1" placeholder="Coordonnées GPS (Lat, Long)" readonly>
-          <button onclick="getLocation()" type="button" class="bg-green-600 text-white px-4 rounded-lg hover:bg-green-500 transition">
-              <i class="fas fa-map-marker-alt"></i>
-          </button>
-      `;
+                <input type="text" id="inp_gps" class="form-input flex-1" placeholder="Coordonnées GPS (Lat, Long)" readonly>
+                <button onclick="getLocation()" type="button" class="bg-green-600 text-white px-4 rounded-lg hover:bg-green-500 transition">
+                    <i class="fas fa-map-marker-alt"></i>
+                </button>
+            `;
         c.appendChild(locDiv);
         addInp(c, "adresse_auto", "Adresse détectée", "text", "");
 
@@ -1972,6 +2048,50 @@ Abidjan, Plateau</textarea
           .forEach((input) => {
             input.addEventListener("input", saveDraft);
           });
+      }
+
+      // Handler pour la marche GC (appelé depuis renderPreview)
+      function handleMarcheGC(contentBlocks, val) {
+        const gcRows = (gcData || [])
+          .map(
+            (s) => `
+              <tr>
+                <td class="text-center font-bold">${s.type}</td>
+                <td class="text-center">${s.etat}</td>
+                <td class="p-1">${
+                  s.img
+                    ? `<img src="${s.img}" style="height:40px; width:100%; object-fit:cover; border-radius:4px;">`
+                    : ""
+                }</td>
+              </tr>
+            `
+          )
+          .join("");
+
+        contentBlocks.push({
+          h: 200,
+          html: `<div class="report-block">
+                  <div class="section-header">RÉSUMÉ DU PARCOURS GC</div>
+                  <table class="data-table">
+                    <tr><th>Départ A</th><td>${val("site_a")} (${val(
+            "gps_a"
+          )})</td></tr>
+                    <tr><th>Arrivée B</th><td>${val("site_b")} (${val(
+            "gps_b"
+          )})</td></tr>
+                    <tr><th>Sens</th><td class="font-bold text-pink-600">${val(
+                      "sens_marche"
+                    )}</td></tr>
+                  </table>
+                  <table class="data-table mt-4">
+                    <thead><tr class="bg-slate-100"><th>Type</th><th>État</th><th>Photo</th></tr></thead>
+                    <tbody>${
+                      gcRows ||
+                      '<tr><td colspan="3" class="text-center italic">Aucun élément ajouté</td></tr>'
+                    }</tbody>
+                  </table>
+                 </div>`,
+        });
       }
 
       function getLocation() {
@@ -2121,10 +2241,10 @@ Abidjan, Plateau</textarea
             const label = isOk ? "SLA RESPECTÉ" : "HORS DÉLAI";
 
             slaHtml = `
-                          <div style="border: 4px solid; padding: 10px 20px; border-radius: 8px; font-weight: 900; text-transform: uppercase; font-size: 1.2rem; transform: rotate(-8deg); opacity: 0.9; margin-top: 20px; text-align:center;" class="${colorClass}">
-                              <div style="font-size:0.8rem; letter-spacing:1px;">DURÉE: ${durationText}</div>
-                              <div>${label}</div>
-                          </div>`;
+                                <div style="border: 4px solid; padding: 10px 20px; border-radius: 8px; font-weight: 900; text-transform: uppercase; font-size: 1.2rem; transform: rotate(-8deg); opacity: 0.9; margin-top: 20px; text-align:center;" class="${colorClass}">
+                                    <div style="font-size:0.8rem; letter-spacing:1px;">DURÉE: ${durationText}</div>
+                                    <div>${label}</div>
+                                </div>`;
           }
         }
 
@@ -2132,46 +2252,47 @@ Abidjan, Plateau</textarea
         const coverDiv = document.createElement("div");
         coverDiv.className = "a4-page";
         coverDiv.innerHTML = `
-                      <img src="LOGO ITC.png" class="watermark" onerror="this.style.display='none'">
-                      <div class="header-logos-container"><img src="LOGO ITC.png" class="header-logo-img"><img src="logo MOOV.png" class="header-logo-img"></div>
-                      <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:20px; margin-top:50px;">
-                          <h1 class="cover-title">${t
-                            .replace(/_/g, " ")
-                            .toUpperCase()}</h1>
-                          <div class="cover-liaison">${
-                            val("liaison") || "..."
-                          }</div>
-                          <div style="text-align:center; margin-top:10px;">
-                              ${codeHtml}
-                              <p class="text-lg"><strong>Date:</strong> ${val(
-                                "date_rapport"
-                              )}</p>
-                              <p class="text-lg"><strong>Intervenant:</strong> ${val(
-                                "intervenant"
-                              )}</p>
-                              <p class="text-lg"><strong>Zone:</strong> ${val(
-                                "zone"
-                              )} - ${val("ville")}</p>
-                              ${
-                                (t === "incident" || t === "survey_terrain") &&
-                                (val("cause") || val("survey_type"))
-                                  ? `<br><div class="text-xl font-bold ${
-                                      t === "incident"
-                                        ? "text-red-500 border-red-200"
-                                        : "text-pink-600 border-pink-200"
-                                    } uppercase border-2 p-2 rounded">${
-                                      t === "incident"
-                                        ? val("cause")
-                                        : val("survey_type")
-                                    }</div>`
-                                  : ""
-                              }
-                          </div>
-                          ${statusHtml}
-                          ${slaHtml}
-                      </div>
-                      <div class="page-number">Page 1</div>
-                  `;
+                            <img src="LOGO ITC.png" class="watermark" onerror="this.style.display='none'">
+                            <div class="header-logos-container"><img src="LOGO ITC.png" class="header-logo-img"><img src="logo MOOV.png" class="header-logo-img"></div>
+                            <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:20px; margin-top:50px;">
+                                <h1 class="cover-title">${t
+                                  .replace(/_/g, " ")
+                                  .toUpperCase()}</h1>
+                                <div class="cover-liaison">${
+                                  val("liaison") || "..."
+                                }</div>
+                                <div style="text-align:center; margin-top:10px;">
+                                    ${codeHtml}
+                                    <p class="text-lg"><strong>Date:</strong> ${val(
+                                      "date_rapport"
+                                    )}</p>
+                                    <p class="text-lg"><strong>Intervenant:</strong> ${val(
+                                      "intervenant"
+                                    )}</p>
+                                    <p class="text-lg"><strong>Zone:</strong> ${val(
+                                      "zone"
+                                    )} - ${val("ville")}</p>
+                                    ${
+                                      (t === "incident" ||
+                                        t === "survey_terrain") &&
+                                      (val("cause") || val("survey_type"))
+                                        ? `<br><div class="text-xl font-bold ${
+                                            t === "incident"
+                                              ? "text-red-500 border-red-200"
+                                              : "text-pink-600 border-pink-200"
+                                          } uppercase border-2 p-2 rounded">${
+                                            t === "incident"
+                                              ? val("cause")
+                                              : val("survey_type")
+                                          }</div>`
+                                        : ""
+                                    }
+                                </div>
+                                ${statusHtml}
+                                ${slaHtml}
+                            </div>
+                            <div class="page-number">Page 1</div>
+                        `;
         container.appendChild(coverDiv);
 
         // --- PAGINATION BLOCKS ---
@@ -2401,6 +2522,15 @@ Abidjan, Plateau</textarea
           }
         }
 
+        // Si c'est une marche GC, ajouter son bloc via le handler
+        if (t === "marche_gc") {
+          try {
+            handleMarcheGC(contentBlocks, val);
+          } catch (e) {
+            console.error("Erreur handleMarcheGC:", e);
+          }
+        }
+
         let pageNum = 2;
         let currentPageDiv = createNewPageDiv(pageNum);
         let currentHeight = 0;
@@ -2439,10 +2569,10 @@ Abidjan, Plateau</textarea
         const div = document.createElement("div");
         div.className = "a4-page";
         div.innerHTML = `
-                      <img src="LOGO ITC.png" class="watermark" onerror="this.style.display='none'">
-                      <div class="report-content-safe-zone"></div>
-                      <div class="page-number">Page ${num}</div>
-                  `;
+                            <img src="LOGO ITC.png" class="watermark" onerror="this.style.display='none'">
+                            <div class="report-content-safe-zone"></div>
+                            <div class="page-number">Page ${num}</div>
+                        `;
         return div;
       }
 
@@ -2572,33 +2702,35 @@ Abidjan, Plateau</textarea
               const intervenant = r.summary.intervenant || "";
 
               return `<tr class="hover:bg-slate-50">
-                          <td class="px-6 py-4">${r.summary.date}</td>
-                          <td class="px-6 py-4 font-bold">${
-                            r.summary.liaison
-                          }</td>
-                          <td class="px-6 py-4 text-xs">
-                              <span class="font-bold text-pink-600">${code}</span><br>
-                              <span class="text-slate-500">${intervenant}</span>
-                          </td>
-                          <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
-                            r.data.inputs.inp_statut === "Terminé"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-orange-100 text-orange-700"
-                          }">${r.data.inputs.inp_statut || "-"}</span></td>
-                          <td class="px-6 py-4 text-right">
-                              <div class="flex gap-2 justify-end">
-                                  <button onclick="loadReport(${globalIndex})" class="text-blue-600 hover:text-blue-800 p-1" title="Consulter/Modifier"><i class="fas fa-edit"></i></button>
-                                  <button onclick="jumpToGPS(${globalIndex})" class="p-1 ${
+                                <td class="px-6 py-4">${r.summary.date}</td>
+                                <td class="px-6 py-4 font-bold">${
+                                  r.summary.liaison
+                                }</td>
+                                <td class="px-6 py-4 text-xs">
+                                    <span class="font-bold text-pink-600">${code}</span><br>
+                                    <span class="text-slate-500">${intervenant}</span>
+                                </td>
+                                <td class="px-6 py-4"><span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                  r.data.inputs.inp_statut === "Terminé"
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-orange-100 text-orange-700"
+                                }">${
+                r.data.inputs.inp_statut || "-"
+              }</span></td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex gap-2 justify-end">
+                                        <button onclick="loadReport(${globalIndex})" class="text-blue-600 hover:text-blue-800 p-1" title="Consulter/Modifier"><i class="fas fa-edit"></i></button>
+                                        <button onclick="jumpToGPS(${globalIndex})" class="p-1 ${
                 hasGps
                   ? "text-orange-600 hover:text-orange-800"
                   : "text-gray-400 cursor-not-allowed"
               }" ${
                 hasGps ? "" : "disabled"
               } title="Afficher sur Carte"><i class="fas fa-map-marker-alt"></i></button>
-                                  <button onclick="deleteReport(${globalIndex})" class="text-red-600 hover:text-red-800 p-1" title="Supprimer"><i class="fas fa-trash"></i></button>
-                              </div>
-                          </td>
-                      </tr>`;
+                                        <button onclick="deleteReport(${globalIndex})" class="text-red-600 hover:text-red-800 p-1" title="Supprimer"><i class="fas fa-trash"></i></button>
+                                    </div>
+                                </td>
+                            </tr>`;
             })
             .join("");
       }
@@ -2614,35 +2746,37 @@ Abidjan, Plateau</textarea
               const type = r.summary.type;
 
               return `<tr class="hover:bg-slate-50 border-b">
-                          <td class="p-4"><i class="${getReportIcon(
-                            type
-                          )} text-pink-600 mr-2"></i>${r.summary.date}</td>
-                          <td class="p-4 uppercase text-[10px] font-bold">${type.replace(
-                            /_/g,
-                            " "
-                          )}</td>
-                          <td class="p-4 text-xs">
-                              <span class="font-bold text-pink-600">${code}</span><br>
-                              <span class="text-slate-500">${
-                                r.summary.intervenant
-                              }</span>
-                          </td>
-                          <td class="p-4 text-right">
-                              <div class="flex gap-2 justify-end">
-                                  <button onclick="printDirectlyFromArchive(${globalIndex})" class="bg-slate-800 text-white px-3 py-1 rounded text-[10px] font-bold hover:bg-slate-700">
-                                      <i class="fas fa-print mr-1"></i> PDF
-                                  </button>
+                                <td class="p-4"><i class="${getReportIcon(
+                                  type
+                                )} text-pink-600 mr-2"></i>${
+                r.summary.date
+              }</td>
+                                <td class="p-4 uppercase text-[10px] font-bold">${type.replace(
+                                  /_/g,
+                                  " "
+                                )}</td>
+                                <td class="p-4 text-xs">
+                                    <span class="font-bold text-pink-600">${code}</span><br>
+                                    <span class="text-slate-500">${
+                                      r.summary.intervenant
+                                    }</span>
+                                </td>
+                                <td class="p-4 text-right">
+                                    <div class="flex gap-2 justify-end">
+                                        <button onclick="printDirectlyFromArchive(${globalIndex})" class="bg-slate-800 text-white px-3 py-1 rounded text-[10px] font-bold hover:bg-slate-700">
+                                            <i class="fas fa-print mr-1"></i> PDF
+                                        </button>
 
-                                  <button onclick="loadReport(${globalIndex})" class="text-blue-600 hover:bg-blue-50 p-2 rounded" title="Modifier">
-                                      <i class="fas fa-edit"></i>
-                                  </button>
+                                        <button onclick="loadReport(${globalIndex})" class="text-blue-600 hover:bg-blue-50 p-2 rounded" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
 
-                                  <button onclick="deleteReport(${globalIndex})" class="text-red-600 hover:bg-red-50 p-2 rounded">
-                                      <i class="fas fa-trash"></i>
-                                  </button>
-                              </div>
-                          </td>
-                      </tr>`;
+                                        <button onclick="deleteReport(${globalIndex})" class="text-red-600 hover:bg-red-50 p-2 rounded">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>`;
             })
             .join("");
       }
@@ -2871,28 +3005,30 @@ Abidjan, Plateau</textarea
         document.getElementById("inv-items-editor").innerHTML = invItems
           .map(
             (x, i) => `
-                      <div class="flex gap-2 items-center bg-white p-1 rounded shadow-sm border ${
-                        x.type === "Fourniture"
-                          ? "border-blue-300"
-                          : "border-purple-300"
-                      }">
-                          <span class="w-20 text-center text-xs font-bold ${
-                            x.type === "Fourniture"
-                              ? "text-blue-700"
-                              : "text-purple-700"
-                          }">${x.type.toUpperCase().substring(0, 4)}.</span>
-                          <input class="form-input flex-1 mb-0 text-xs h-8" list="price-list-options" value="${
-                            x.desc
-                          }" onchange="upItem(${i},'desc',this.value)" placeholder="Description Item">
-                          <input class="form-input w-12 mb-0 text-center text-xs h-8" value="${
-                            x.qty
-                          }" onchange="upItem(${i},'qty',this.value)" placeholder="Qté">
-                          <input class="form-input w-20 mb-0 text-right text-xs h-8" value="${
-                            x.price
-                          }" onchange="upItem(${i},'price',this.value)" placeholder="P.U.">
-                          <button onclick="removeItem(${i})" class="text-red-400 hover:text-red-600 p-1"><i class="fas fa-trash-alt"></i></button>
-                      </div>
-                  `
+                            <div class="flex gap-2 items-center bg-white p-1 rounded shadow-sm border ${
+                              x.type === "Fourniture"
+                                ? "border-blue-300"
+                                : "border-purple-300"
+                            }">
+                                <span class="w-20 text-center text-xs font-bold ${
+                                  x.type === "Fourniture"
+                                    ? "text-blue-700"
+                                    : "text-purple-700"
+                                }">${x.type
+              .toUpperCase()
+              .substring(0, 4)}.</span>
+                                <input class="form-input flex-1 mb-0 text-xs h-8" list="price-list-options" value="${
+                                  x.desc
+                                }" onchange="upItem(${i},'desc',this.value)" placeholder="Description Item">
+                                <input class="form-input w-12 mb-0 text-center text-xs h-8" value="${
+                                  x.qty
+                                }" onchange="upItem(${i},'qty',this.value)" placeholder="Qté">
+                                <input class="form-input w-20 mb-0 text-right text-xs h-8" value="${
+                                  x.price
+                                }" onchange="upItem(${i},'price',this.value)" placeholder="P.U.">
+                                <button onclick="removeItem(${i})" class="text-red-400 hover:text-red-600 p-1"><i class="fas fa-trash-alt"></i></button>
+                            </div>
+                        `
           )
           .join("");
 
@@ -2918,13 +3054,13 @@ Abidjan, Plateau</textarea
           fournitureItems.forEach((x) => {
             const t = x.qty * x.price;
             rowsHTML += `<tr>
-                              <td class="pl-2 py-1 border-b border-slate-100">${
-                                x.desc
-                              }</td>
-                              <td class="text-center">${x.qty}</td>
-                              <td class="text-right">${x.price.toLocaleString()}</td>
-                              <td class="text-right pr-2">${t.toLocaleString()}</td>
-                          </tr>`;
+                                    <td class="pl-2 py-1 border-b border-slate-100">${
+                                      x.desc
+                                    }</td>
+                                    <td class="text-center">${x.qty}</td>
+                                    <td class="text-right">${x.price.toLocaleString()}</td>
+                                    <td class="text-right pr-2">${t.toLocaleString()}</td>
+                                </tr>`;
           });
           rowsHTML += `<tr class="bg-blue-100/70 border-b-2 border-blue-400"><td colspan="3" class="py-1 pl-2 font-bold text-xs text-right">Sous-Total Fourniture</td><td class="text-right pr-2 font-black text-xs">${totalFourniture.toLocaleString()}</td></tr>`;
         }
@@ -2934,13 +3070,13 @@ Abidjan, Plateau</textarea
           prestationItems.forEach((x) => {
             const t = x.qty * x.price;
             rowsHTML += `<tr>
-                              <td class="pl-2 py-1 border-b border-slate-100">${
-                                x.desc
-                              }</td>
-                              <td class="text-center">${x.qty}</td>
-                              <td class="text-right">${x.price.toLocaleString()}</td>
-                              <td class="text-right pr-2">${t.toLocaleString()}</td>
-                          </tr>`;
+                                    <td class="pl-2 py-1 border-b border-slate-100">${
+                                      x.desc
+                                    }</td>
+                                    <td class="text-center">${x.qty}</td>
+                                    <td class="text-right">${x.price.toLocaleString()}</td>
+                                    <td class="text-right pr-2">${t.toLocaleString()}</td>
+                                </tr>`;
           });
           rowsHTML += `<tr class="bg-purple-100/70 border-b-2 border-purple-400"><td colspan="3" class="py-1 pl-2 font-bold text-xs text-right">Sous-Total Prestation</td><td class="text-right pr-2 font-black text-xs">${totalPrestation.toLocaleString()}</td></tr>`;
         }
@@ -3130,11 +3266,11 @@ Abidjan, Plateau</textarea
         const d = document.createElement("div");
         d.className = "bg-slate-50 p-2 rounded border mb-2";
         d.innerHTML = `
-                      <label class="block text-[10px] font-bold text-pink-600 mb-1">${label}</label>
-                      <div id="img-slots-${id}" class="space-y-2 mb-2"></div>
-                      <input id="inp_comment_${id}" class="form-input text-xs h-6 mb-2" placeholder="Commentaire de la section photo..." oninput="renderPreview();">
-                      <button type="button" onclick="addDynamicImageInput('${id}')" class="w-full bg-pink-100 text-pink-700 text-xs font-bold py-1 rounded hover:bg-pink-200 transition"><i class="fas fa-camera mr-1"></i> Ajouter une image</button>
-                  `;
+                            <label class="block text-[10px] font-bold text-pink-600 mb-1">${label}</label>
+                            <div id="img-slots-${id}" class="space-y-2 mb-2"></div>
+                            <input id="inp_comment_${id}" class="form-input text-xs h-6 mb-2" placeholder="Commentaire de la section photo..." oninput="renderPreview();">
+                            <button type="button" onclick="addDynamicImageInput('${id}')" class="w-full bg-pink-100 text-pink-700 text-xs font-bold py-1 rounded hover:bg-pink-200 transition"><i class="fas fa-camera mr-1"></i> Ajouter une image</button>
+                        `;
         p.appendChild(d);
 
         if (!imagesData[id] || !Array.isArray(imagesData[id].urls)) {
@@ -3183,12 +3319,12 @@ Abidjan, Plateau</textarea
           : `<input type="file" id="inp_${id}_${index}" class="text-[10px] flex-1" onchange="handleDynamicImageUpload('${id}', ${index}, this)">`;
 
         div.innerHTML = `
-                      <span class="text-xs font-bold w-6 text-center text-slate-500">${
-                        index + 1
-                      }.</span>
-                      ${fileInputHtml}
-                      <button type="button" onclick="removeDynamicImageInput('${id}', ${index})" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
-                  `;
+                            <span class="text-xs font-bold w-6 text-center text-slate-500">${
+                              index + 1
+                            }.</span>
+                            ${fileInputHtml}
+                            <button type="button" onclick="removeDynamicImageInput('${id}', ${index})" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+                        `;
         container.appendChild(div);
 
         if (isImagePresent && initialIndex === -1) renderPreview();
@@ -3255,15 +3391,19 @@ Abidjan, Plateau</textarea
           .join("");
 
         return `
-                      <div class="mb-3 break-inside-avoid">
-                          <div class="font-bold text-slate-500 text-xs mb-1 ml-1">${t} (${
+                            <div class="mb-3 break-inside-avoid">
+                                <div class="font-bold text-slate-500 text-xs mb-1 ml-1">${t} (${
           urls.length
         } images)</div>
-                          <div class="${gridClass}">
-                              ${imagesHtml}
-                          </div>
-                          ${c ? `<div class="section-comment">${c}</div>` : ""}
-                      </div>`;
+                                <div class="${gridClass}">
+                                    ${imagesHtml}
+                                </div>
+                                ${
+                                  c
+                                    ? `<div class="section-comment">${c}</div>`
+                                    : ""
+                                }
+                            </div>`;
       }
 
       function getRawPhotoHtml(id, t) {
@@ -3283,10 +3423,10 @@ Abidjan, Plateau</textarea
           .join("");
 
         return `
-                      <div class="mb-3 break-inside-avoid">
-                          <div class="font-bold text-slate-500 text-xs mb-1 ml-1">${t}</div>
-                          ${imagesHtml}
-                      </div>`;
+                            <div class="mb-3 break-inside-avoid">
+                                <div class="font-bold text-slate-500 text-xs mb-1 ml-1">${t}</div>
+                                ${imagesHtml}
+                            </div>`;
       }
 
       // --- FIN GESTION DYNAMIQUE DES IMAGES ---
@@ -3372,21 +3512,21 @@ Abidjan, Plateau</textarea
                 statusClass = "bg-red-100 text-red-700";
 
               return `<tr>
-                          <td class="p-4">${i.date}</td>
-                          <td class="p-4 font-bold">${i.num}</td>
-                          <td class="p-4 text-xs">${
-                            i.client.split("\n")[0]
-                          }</td>
-                          <td class="p-4 font-bold">${(
-                            i.total || 0
-                          ).toLocaleString()} FCFA</td>
-                          <td class="p-4"><span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${statusClass}">${
+                                <td class="p-4">${i.date}</td>
+                                <td class="p-4 font-bold">${i.num}</td>
+                                <td class="p-4 text-xs">${
+                                  i.client.split("\n")[0]
+                                }</td>
+                                <td class="p-4 font-bold">${(
+                                  i.total || 0
+                                ).toLocaleString()} FCFA</td>
+                                <td class="p-4"><span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${statusClass}">${
                 i.status
               }</span></td>
-                          <td class="p-4 text-right"><button onclick="loadInvoice(${APP_DATA.invoices.indexOf(
-                            i
-                          )})" class="text-blue-600">Ouvrir</button></td>
-                      </tr>`;
+                                <td class="p-4 text-right"><button onclick="loadInvoice(${APP_DATA.invoices.indexOf(
+                                  i
+                                )})" class="text-blue-600">Ouvrir</button></td>
+                            </tr>`;
             })
             .join("");
       }
@@ -3536,46 +3676,54 @@ Abidjan, Plateau</textarea
         c.innerHTML = fiberData
           .map(
             (f, i) => `
-                      <div class="flex gap-1 mb-1 items-start bg-slate-50 p-2 rounded border border-slate-200">
-                          <input type="number" class="form-input w-12 text-center pt-2 font-bold text-xs bg-white rounded border border-slate-300 mr-1 shadow-sm h-8"
-                                     value="${f.brin}"
-                                     oninput="fiberData[${i}].brin=this.value;renderPreview()" placeholder="Port">
-                          <div class="flex-1 space-y-1">
-                              <div class="flex gap-1">
-                                  <input class="form-input mb-0 text-center text-xs h-8" placeholder="A->B" value="${
-                                    f.lossAB
-                                  }" oninput="fiberData[${i}].lossAB=this.value;renderPreview()">
-                                  <input class="form-input mb-0 text-center text-xs h-8" placeholder="B->A" value="${
-                                    f.lossBA
-                                  }" oninput="fiberData[${i}].lossBA=this.value;renderPreview()">
-                                  <select class="form-input mb-0 text-xs h-8 font-bold ${
-                                    f.status === "HS"
-                                      ? "text-red-600"
-                                      : f.status === "Occupé"
-                                      ? "text-gray-400"
-                                      : ""
-                                  }" onchange="fiberData[${i}].status=this.value;renderFiberEditor();renderPreview()">
-                                      <option value="OK" ${
-                                        f.status === "OK" ? "selected" : ""
-                                      }>OK</option>
-                                      <option value="NOK" ${
-                                        f.status === "NOK" ? "selected" : ""
-                                      }>NOK</option>
-                                      <option value="Occupé" ${
-                                        f.status === "Occupé" ? "selected" : ""
-                                      }>Occupé</option>
-                                      <option value="HS" ${
-                                        f.status === "HS" ? "selected" : ""
-                                      }>HS</option>
-                                  </select>
-                              </div>
-                              <input class="form-input mb-0 text-xs h-7 italic" placeholder="Commentaire..." value="${
-                                f.comment
-                              }" oninput="fiberData[${i}].comment=this.value;renderPreview()">
-                          </div>
-                          <button onclick="removeFiberLine(${i})" class="text-red-400 hover:text-red-600 ml-1 mt-2"><i class="fas fa-trash"></i></button>
-                      </div>
-                  `
+                            <div class="flex gap-1 mb-1 items-start bg-slate-50 p-2 rounded border border-slate-200">
+                                <input type="number" class="form-input w-12 text-center pt-2 font-bold text-xs bg-white rounded border border-slate-300 mr-1 shadow-sm h-8"
+                                           value="${f.brin}"
+                                           oninput="fiberData[${i}].brin=this.value;renderPreview()" placeholder="Port">
+                                <div class="flex-1 space-y-1">
+                                    <div class="flex gap-1">
+                                        <input class="form-input mb-0 text-center text-xs h-8" placeholder="A->B" value="${
+                                          f.lossAB
+                                        }" oninput="fiberData[${i}].lossAB=this.value;renderPreview()">
+                                        <input class="form-input mb-0 text-center text-xs h-8" placeholder="B->A" value="${
+                                          f.lossBA
+                                        }" oninput="fiberData[${i}].lossBA=this.value;renderPreview()">
+                                        <select class="form-input mb-0 text-xs h-8 font-bold ${
+                                          f.status === "HS"
+                                            ? "text-red-600"
+                                            : f.status === "Occupé"
+                                            ? "text-gray-400"
+                                            : ""
+                                        }" onchange="fiberData[${i}].status=this.value;renderFiberEditor();renderPreview()">
+                                            <option value="OK" ${
+                                              f.status === "OK"
+                                                ? "selected"
+                                                : ""
+                                            }>OK</option>
+                                            <option value="NOK" ${
+                                              f.status === "NOK"
+                                                ? "selected"
+                                                : ""
+                                            }>NOK</option>
+                                            <option value="Occupé" ${
+                                              f.status === "Occupé"
+                                                ? "selected"
+                                                : ""
+                                            }>Occupé</option>
+                                            <option value="HS" ${
+                                              f.status === "HS"
+                                                ? "selected"
+                                                : ""
+                                            }>HS</option>
+                                        </select>
+                                    </div>
+                                    <input class="form-input mb-0 text-xs h-7 italic" placeholder="Commentaire..." value="${
+                                      f.comment
+                                    }" oninput="fiberData[${i}].comment=this.value;renderPreview()">
+                                </div>
+                                <button onclick="removeFiberLine(${i})" class="text-red-400 hover:text-red-600 ml-1 mt-2"><i class="fas fa-trash"></i></button>
+                            </div>
+                        `
           )
           .join("");
       }
@@ -3653,6 +3801,7 @@ Abidjan, Plateau</textarea
             inputs,
             boq: boqData,
             images: imagesData,
+            gc: gcData,
             surv: survData,
             survImages: surveillanceImages,
             fiber: fiberData,
