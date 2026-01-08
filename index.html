@@ -38,6 +38,14 @@
         overflow-y: auto; /* Permet le défilement vertical */
       }
 
+      /* Table responsive helper */
+      .table-responsive {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .table-responsive table {
+        min-width: 680px;
+      }
       /* CORRECTION 3: Autoriser le défilement global sur l'app wrapper */
       #app-wrapper {
         display: none;
@@ -927,23 +935,25 @@
             <div
               class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
             >
-              <table class="w-full text-sm text-left">
-                <thead
-                  class="bg-slate-50 uppercase text-xs text-slate-500 font-bold border-b"
-                >
-                  <tr>
-                    <th class="px-6 py-4">Date</th>
-                    <th class="px-6 py-4">Liaison</th>
-                    <th class="px-6 py-4">Code / Intervenant</th>
-                    <th class="px-6 py-4">Statut</th>
-                    <th class="px-6 py-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody
-                  id="incidents-list-body"
-                  class="divide-y divide-slate-100"
-                ></tbody>
-              </table>
+              <div class="table-responsive">
+                <table class="w-full text-sm text-left">
+                  <thead
+                    class="bg-slate-50 uppercase text-xs text-slate-500 font-bold border-b"
+                  >
+                    <tr>
+                      <th class="px-6 py-4">Date</th>
+                      <th class="px-6 py-4">Liaison</th>
+                      <th class="px-6 py-4">Code / Intervenant</th>
+                      <th class="px-6 py-4">Statut</th>
+                      <th class="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    id="incidents-list-body"
+                    class="divide-y divide-slate-100"
+                  ></tbody>
+                </table>
+              </div>
             </div>
           </div>
 
@@ -1381,19 +1391,21 @@ Abidjan, Plateau</textarea
             <div class="max-w-7xl mx-auto">
               <h2 class="text-2xl font-bold mb-4">Historique Global</h2>
               <div class="bg-white rounded-xl shadow overflow-hidden">
-                <table class="w-full text-sm text-left">
-                  <thead
-                    class="bg-slate-50 uppercase text-xs font-bold text-slate-500"
-                  >
-                    <tr>
-                      <th class="p-4">Date</th>
-                      <th class="p-4">Type</th>
-                      <th class="p-4">Code / Intervenant</th>
-                      <th class="p-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="full-history-body"></tbody>
-                </table>
+                <div class="table-responsive">
+                  <table class="w-full text-sm text-left">
+                    <thead
+                      class="bg-slate-50 uppercase text-xs font-bold text-slate-500"
+                    >
+                      <tr>
+                        <th class="p-4">Date</th>
+                        <th class="p-4">Type</th>
+                        <th class="p-4">Code / Intervenant</th>
+                        <th class="p-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="full-history-body"></tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
@@ -1401,21 +1413,23 @@ Abidjan, Plateau</textarea
             <div class="max-w-7xl mx-auto">
               <h2 class="text-2xl font-bold mb-4">Proformas</h2>
               <div class="bg-white rounded-xl shadow overflow-hidden">
-                <table class="w-full text-sm text-left">
-                  <thead
-                    class="bg-slate-50 uppercase text-xs font-bold text-slate-500"
-                  >
-                    <tr>
-                      <th class="p-4">Date</th>
-                      <th class="p-4">N°</th>
-                      <th class="p-4">Client</th>
-                      <th class="p-4">Total</th>
-                      <th class="p-4">Statut</th>
-                      <th class="p-4 text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody id="full-invoices-body"></tbody>
-                </table>
+                <div class="table-responsive">
+                  <table class="w-full text-sm text-left">
+                    <thead
+                      class="bg-slate-50 uppercase text-xs font-bold text-slate-500"
+                    >
+                      <tr>
+                        <th class="p-4">Date</th>
+                        <th class="p-4">N°</th>
+                        <th class="p-4">Client</th>
+                        <th class="p-4">Total</th>
+                        <th class="p-4">Statut</th>
+                        <th class="p-4 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="full-invoices-body"></tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
@@ -1468,18 +1482,20 @@ Abidjan, Plateau</textarea
                 <h3 class="text-lg font-black text-slate-800 p-4 border-b">
                   Liste des Comptes
                 </h3>
-                <table class="w-full text-sm text-left">
-                  <thead
-                    class="bg-slate-50 uppercase text-xs font-bold text-slate-500"
-                  >
-                    <tr>
-                      <th class="p-4">Identifiant</th>
-                      <th class="p-4">Rôle</th>
-                      <th class="p-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="admin-users-list"></tbody>
-                </table>
+                <div class="table-responsive">
+                  <table class="w-full text-sm text-left">
+                    <thead
+                      class="bg-slate-50 uppercase text-xs font-bold text-slate-500"
+                    >
+                      <tr>
+                        <th class="p-4">Identifiant</th>
+                        <th class="p-4">Rôle</th>
+                        <th class="p-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="admin-users-list"></tbody>
+                  </table>
+                </div>
               </div>
             </div>
 
@@ -1489,68 +1505,72 @@ Abidjan, Plateau</textarea
               <h3 class="text-lg font-black text-slate-800 p-4 border-b">
                 Droits et Permissions
               </h3>
-              <table class="w-full text-xs text-left">
-                <thead class="bg-slate-50 uppercase font-bold text-slate-500">
-                  <tr>
-                    <th class="p-3 w-1/3">Action / Module</th>
-                    <th class="p-3 text-center text-blue-600">Technicien</th>
-                    <th class="p-3 text-pink-600">Manager (Admin)</th>
-                    <th class="p-3 text-green-600">Validateur (Client)</th>
-                  </tr>
-                </thead>
-                <tbody id="permissions-table-body">
-                  <tr>
-                    <td class="p-3 border-b">Créer / Modifier un Rapport</td>
-                    <td class="text-center">
-                      <i class="fas fa-check text-blue-500"></i>
-                    </td>
-                    <td><i class="fas fa-check text-pink-500"></i></td>
-                    <td><i class="fas fa-times text-red-500"></i></td>
-                  </tr>
-                  <tr>
-                    <td class="p-3 border-b">Accès au Cockpit & Archive</td>
-                    <td class="text-center">
-                      <i class="fas fa-check text-blue-500"></i>
-                    </td>
-                    <td><i class="fas fa-check text-pink-500"></i></td>
-                    <td><i class="fas fa-check text-green-500"></i></td>
-                  </tr>
-                  <tr>
-                    <td class="p-3 border-b">Accès Finance (Proforma)</td>
-                    <td class="text-center">
-                      <i class="fas fa-times text-red-500"></i>
-                    </td>
-                    <td><i class="fas fa-check text-pink-500"></i></td>
-                    <td><i class="fas fa-check text-green-500"></i></td>
-                  </tr>
-                  <tr>
-                    <td class="p-3 border-b">Créer / Modifier un Proforma</td>
-                    <td class="text-center">
-                      <i class="fas fa-times text-red-500"></i>
-                    </td>
-                    <td><i class="fas fa-check text-pink-500"></i></td>
-                    <td><i class="fas fa-times text-red-500"></i></td>
-                  </tr>
-                  <tr>
-                    <td class="p-3 border-b">
-                      Valider un Proforma (Finaliser)
-                    </td>
-                    <td class="text-center">
-                      <i class="fas fa-times text-red-500"></i>
-                    </td>
-                    <td><i class="fas fa-check text-pink-500"></i></td>
-                    <td><i class="fas fa-check text-green-500"></i></td>
-                  </tr>
-                  <tr>
-                    <td class="p-3 border-b font-bold">Accès Administration</td>
-                    <td class="text-center">
-                      <i class="fas fa-times text-red-500"></i>
-                    </td>
-                    <td><i class="fas fa-check text-pink-500"></i></td>
-                    <td><i class="fas fa-times text-red-500"></i></td>
-                  </tr>
-                </tbody>
-              </table>
+              <div class="table-responsive">
+                <table class="w-full text-xs text-left">
+                  <thead class="bg-slate-50 uppercase font-bold text-slate-500">
+                    <tr>
+                      <th class="p-3 w-1/3">Action / Module</th>
+                      <th class="p-3 text-center text-blue-600">Technicien</th>
+                      <th class="p-3 text-pink-600">Manager (Admin)</th>
+                      <th class="p-3 text-green-600">Validateur (Client)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="permissions-table-body">
+                    <tr>
+                      <td class="p-3 border-b">Créer / Modifier un Rapport</td>
+                      <td class="text-center">
+                        <i class="fas fa-check text-blue-500"></i>
+                      </td>
+                      <td><i class="fas fa-check text-pink-500"></i></td>
+                      <td><i class="fas fa-times text-red-500"></i></td>
+                    </tr>
+                    <tr>
+                      <td class="p-3 border-b">Accès au Cockpit & Archive</td>
+                      <td class="text-center">
+                        <i class="fas fa-check text-blue-500"></i>
+                      </td>
+                      <td><i class="fas fa-check text-pink-500"></i></td>
+                      <td><i class="fas fa-check text-green-500"></i></td>
+                    </tr>
+                    <tr>
+                      <td class="p-3 border-b">Accès Finance (Proforma)</td>
+                      <td class="text-center">
+                        <i class="fas fa-times text-red-500"></i>
+                      </td>
+                      <td><i class="fas fa-check text-pink-500"></i></td>
+                      <td><i class="fas fa-check text-green-500"></i></td>
+                    </tr>
+                    <tr>
+                      <td class="p-3 border-b">Créer / Modifier un Proforma</td>
+                      <td class="text-center">
+                        <i class="fas fa-times text-red-500"></i>
+                      </td>
+                      <td><i class="fas fa-check text-pink-500"></i></td>
+                      <td><i class="fas fa-times text-red-500"></i></td>
+                    </tr>
+                    <tr>
+                      <td class="p-3 border-b">
+                        Valider un Proforma (Finaliser)
+                      </td>
+                      <td class="text-center">
+                        <i class="fas fa-times text-red-500"></i>
+                      </td>
+                      <td><i class="fas fa-check text-pink-500"></i></td>
+                      <td><i class="fas fa-check text-green-500"></i></td>
+                    </tr>
+                    <tr>
+                      <td class="p-3 border-b font-bold">
+                        Accès Administration
+                      </td>
+                      <td class="text-center">
+                        <i class="fas fa-times text-red-500"></i>
+                      </td>
+                      <td><i class="fas fa-check text-pink-500"></i></td>
+                      <td><i class="fas fa-times text-red-500"></i></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
