@@ -2269,6 +2269,9 @@ Abidjan, Plateau</textarea
           html: `<div class="report-block">
                   <div class="section-header">RÉSUMÉ DU PARCOURS GC</div>
                   <table class="data-table">
+                    <tr><th>Date / Heure</th><td>${val("date_gc") || ""} ${
+            val("time_gc") || ""
+          }</td></tr>
                     <tr><th>Départ A</th><td>${val("site_a")} (${val(
             "gps_a"
           )})</td></tr>
@@ -2468,6 +2471,15 @@ Abidjan, Plateau</textarea
                                     <p class="text-lg"><strong>Zone:</strong> ${val(
                                       "zone"
                                     )} - ${val("ville")}</p>
+                                    ${
+                                      t === "marche_gc"
+                                        ? `<p class="text-lg"><strong>Date du jour:</strong> ${val(
+                                            "date_gc"
+                                          )}</p><p class="text-lg"><strong>Heure:</strong> ${val(
+                                            "time_gc"
+                                          )}</p>`
+                                        : ``
+                                    }
                                     ${
                                       (t === "incident" ||
                                         t === "survey_terrain") &&
