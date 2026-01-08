@@ -46,6 +46,30 @@
       .table-responsive table {
         min-width: 680px;
       }
+      /* Ensure action buttons are visible and wrap on small screens */
+      .table-responsive .justify-end {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .table-responsive button,
+      .table-responsive a {
+        display: inline-flex !important;
+        white-space: nowrap;
+      }
+      @media (max-width: 640px) {
+        .table-responsive table {
+          min-width: 520px;
+        }
+        .table-responsive th,
+        .table-responsive td {
+          white-space: normal;
+        }
+        .table-responsive .justify-end {
+          justify-content: flex-start;
+        }
+      }
       /* CORRECTION 3: Autoriser le défilement global sur l'app wrapper */
       #app-wrapper {
         display: none;
