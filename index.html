@@ -1973,6 +1973,12 @@ Abidjan, Plateau</textarea
                       ? `<img src="${step.img}" class="h-16 w-full object-cover mt-2 rounded">`
                       : ""
                   }
+                  <div class="mt-2">
+                      <label class="text-[10px] font-bold text-slate-400 uppercase">Position GPS de l'élément</label>
+                      <input class="form-input text-xs mt-1" placeholder="Lat, Long" value="${
+                        step.gps || ""
+                      }" oninput="gcData[${i}].gps=this.value;renderPreview()">
+                  </div>
               </div>
           `
           )
@@ -1980,7 +1986,7 @@ Abidjan, Plateau</textarea
       }
 
       function addGCStep() {
-        gcData.push({ type: "Poteau", etat: "Bon", img: "" });
+        gcData.push({ type: "Poteau", etat: "Bon", img: "", gps: "" });
         renderGCStepEditor();
         renderPreview();
       }
@@ -2262,11 +2268,17 @@ Abidjan, Plateau</textarea
               <tr>
                 <td class="text-center font-bold">${s.type}</td>
                 <td class="text-center">${s.etat}</td>
-                <td class="p-1">${
-                  s.img
-                    ? `<img src="${s.img}" style="height:40px; width:100%; object-fit:cover; border-radius:4px;">`
-                    : ""
-                }</td>
+                <td class="p-1">
+                  ${
+                    s.img
+                      ? `<div><img src="${
+                          s.img
+                        }" style="height:60px; width:100%; object-fit:cover; border-radius:4px;"></div><div class="text-xs italic text-slate-500 mt-1">${
+                          s.gps || ""
+                        }</div>`
+                      : `<div class="text-xs italic text-slate-400">Aucune photo</div>`
+                  }
+                </td>
               </tr>
             `
           )
