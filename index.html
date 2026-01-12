@@ -1068,7 +1068,7 @@
                 <div class="grid grid-cols-2 gap-3">
                   <button
                     id="btn-pdf-editor"
-                    onclick="generatePDF(document.getElementById('report-type').value, document.getElementById('inp_report_code').value)"
+                    onclick="generatePDF(document.getElementById('report-type').value, document.getElementById('inp_report_code').value, this)"
                     class="bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition"
                   >
                     <i class="fas fa-file-pdf mr-2"></i>PDF
@@ -1225,7 +1225,7 @@ Abidjan, Plateau</textarea
                 <div class="grid grid-cols-2 gap-3">
                   <button
                     id="btn-pdf-editor"
-                    onclick="generatePDF(document.getElementById('report-type').value, document.getElementById('inp_liaison').value)"
+                    onclick="generatePDF(document.getElementById('report-type').value, document.getElementById('inp_liaison').value, this)"
                     class="bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition"
                   >
                     <i class="fas fa-file-pdf mr-2"></i>PDF
@@ -2215,7 +2215,7 @@ Abidjan, Plateau</textarea
           const btnsDiv = document.createElement("div");
           btnsDiv.className = "mt-3 flex gap-2";
           btnsDiv.innerHTML = `
-            <button type="button" onclick="generatePDF('marche_gc', document.getElementById('inp_report_code')?.value)" class="w-1/2 bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition">
+            <button type="button" onclick="generatePDF('marche_gc', document.getElementById('inp_report_code')?.value, this)" class="w-1/2 bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition">
               <i class="fas fa-file-pdf mr-2"></i> Générer PDF
             </button>
             <button type="button" onclick="saveReport()" class="w-1/2 bg-green-600 text-white p-3 rounded-lg font-bold text-sm hover:bg-green-500 transition">
@@ -3119,13 +3119,19 @@ Abidjan, Plateau</textarea
       }
 
       // CORRECTION : Utilisation de async pour permettre l'attente du rendu de chaque page
-      async function generatePDF(type, liaisonName) {
+      async function generatePDF(type, liaisonName, btnElement) {
         const { jsPDF } = window.jspdf;
         // On cible précisément les pages A4 générées dans l'aperçu
         const pages = document.querySelectorAll(
           "#report-pages-container .a4-page"
         );
-        const btn = document.getElementById("btn-pdf-editor");
+        // Prefer the passed button (the one clicked). Fallback to existing id or a safe temporary element.
+        let btn = btnElement || document.getElementById("btn-pdf-editor");
+        if (!btn) {
+          btn = document.createElement("button");
+          btn.disabled = false;
+          btn.innerHTML = "";
+        }
 
         if (pages.length === 0) {
           alert("L'aperçu est vide. Veuillez remplir le formulaire.");
