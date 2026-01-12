@@ -3046,71 +3046,65 @@ Abidjan, Plateau</textarea
       // CORRECTION : Utilisation de async pour permettre l'attente du rendu de chaque page
       async function generatePDF(type, liaisonName) {
         const { jsPDF } = window.jspdf;
-        // On cible précisément les pages A4 générées dans l'aperçu
         const pages = document.querySelectorAll(
           "#report-pages-container .a4-page"
         );
         const btn = document.getElementById("btn-pdf-editor");
 
-        if (pages.length === 0) {
-          alert("L'aperçu est vide. Veuillez remplir le formulaire.");
-          return;
-        }
+        if (pages.length === 0) return alert("L'aperçu est vide.");
 
-        const actualLiaison =
-          liaisonName ||
-          document.getElementById("inp_liaison")?.value ||
-          "Rapport";
-        const cleanLiaison = actualLiaison
-          .trim()
-          .replace(/[/\\?%*:|"<>]/g, "-");
-
-        // UI : Feedback visuel
         btn.disabled = true;
-        const originalBtnText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>...';
+        btn.innerHTML =
+          '<i class="fas fa-spinner animate-spin"></i> Génération...';
 
         const pdf = new jsPDF({
           orientation: "p",
           unit: "mm",
           format: "a4",
-          compress: true,
+          compress: true, // Compresse le fichier pour qu'il soit plus léger sur mobile
         });
 
         try {
-          // Boucle sur chaque page de l'aperçu pour les capturer une par une
           for (let i = 0; i < pages.length; i++) {
             const canvas = await html2canvas(pages[i], {
-              scale: 2,
+              scale: 1.5, // Réduit légèrement la qualité (1.5 au lieu de 2) pour éviter les crashs mémoire sur mobile
               useCORS: true,
-              allowTaint: true,
-              backgroundColor: "#ffffff",
+              logging: false,
             });
 
-            const imgData = canvas.toDataURL("image/jpeg", 0.95);
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = pdf.internal.pageSize.getHeight();
-
+            const imgData = canvas.toDataURL("image/jpeg", 0.75); // JPEG compressé à 75%
             if (i > 0) pdf.addPage();
-            pdf.addImage(
-              imgData,
-              "JPEG",
-              0,
-              0,
-              pdfWidth,
-              pdfHeight,
-              undefined,
-              "FAST"
-            );
+            pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
           }
 
-          pdf.save(`${type.toUpperCase()}_${cleanLiaison}.pdf`);
+          // --- CORRECTION POUR MOBILE ---
+          // Au lieu de pdf.save(), on crée un Blob et on utilise un lien de téléchargement
+          const pdfBlob = pdf.output("blob");
+          const url = URL.createObjectURL(pdfBlob);
+          const link = document.createElement("a");
+
+          link.href = url;
+          link.download = `${type.toUpperCase()}_${
+            liaisonName || "Rapport"
+          }.pdf`;
+
+          // Ajout indispensable pour iOS/Safari
+          document.body.appendChild(link);
+          link.click();
+
+          // Nettoyage
+          setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+          }, 100);
         } catch (err) {
           console.error("Erreur PDF:", err);
-          alert("Erreur lors de la génération du PDF.");
+          alert(
+            "Erreur de génération. Vérifiez les autorisations de votre navigateur."
+          );
         } finally {
           btn.disabled = false;
-          btn.innerHTML = originalBtnText;
+          btn.innerHTML = '<i class="fas fa-file-pdf mr-2"></i>PDF';
         }
       }
       // --- INVOICE FUNCTIONS ---
