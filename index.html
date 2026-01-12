@@ -3184,14 +3184,77 @@ Abidjan, Plateau</textarea
         });
 
         try {
+          // Helper: wait images inside an element to load
+          const waitImagesLoaded = (root) =>
+            new Promise((resolve) => {
+              const imgs = Array.from(root.querySelectorAll("img[src]") || []);
+              if (imgs.length === 0) return resolve();
+              let remaining = imgs.length;
+              imgs.forEach((img) => {
+                if (img.complete) {
+                  remaining -= 1;
+                  if (remaining === 0) resolve();
+                } else {
+                  img.addEventListener(
+                    "load",
+                    () => {
+                      remaining -= 1;
+                      if (remaining === 0) resolve();
+                    },
+                    { once: true }
+                  );
+                  img.addEventListener(
+                    "error",
+                    () => {
+                      remaining -= 1;
+                      if (remaining === 0) resolve();
+                    },
+                    { once: true }
+                  );
+                }
+              });
+            });
+
+          // Helper: robust html2canvas renderer with fallback clone + foreignObjectRendering
+          const renderElementToCanvas = async (el) => {
+            try {
+              await waitImagesLoaded(el);
+              return await html2canvas(el, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: "#ffffff",
+              });
+            } catch (errPrimary) {
+              // Fallback: clone element, attach offscreen and try with foreignObjectRendering
+              try {
+                const clone = el.cloneNode(true);
+                clone.style.position = "absolute";
+                clone.style.left = "-9999px";
+                clone.style.top = "0";
+                clone.style.width = getComputedStyle(el).width || "auto";
+                document.body.appendChild(clone);
+                await waitImagesLoaded(clone);
+                const canvas = await html2canvas(clone, {
+                  scale: 2,
+                  useCORS: true,
+                  allowTaint: true,
+                  backgroundColor: "#ffffff",
+                  foreignObjectRendering: true,
+                });
+                document.body.removeChild(clone);
+                return canvas;
+              } catch (errFallback) {
+                console.warn("html2canvas primary error:", errPrimary);
+                console.warn("html2canvas fallback error:", errFallback);
+                throw errFallback || errPrimary;
+              }
+            }
+          };
+
           // Boucle sur chaque page de l'aperçu pour les capturer une par une
           for (let i = 0; i < pages.length; i++) {
-            const canvas = await html2canvas(pages[i], {
-              scale: 2,
-              useCORS: true,
-              allowTaint: true,
-              backgroundColor: "#ffffff",
-            });
+            const canvas = await renderElementToCanvas(pages[i]);
 
             const imgData = canvas.toDataURL("image/jpeg", 0.95);
             const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -4163,3 +4226,4 @@ Abidjan, Plateau</textarea
     </script>
   </body>
 </html>
+voici l'erreur quand je clic sur le bouton pdf sur petit écran ()
