@@ -3186,7 +3186,37 @@ Abidjan, Plateau</textarea
         try {
           // Boucle sur chaque page de l'aperçu pour les capturer une par une
           for (let i = 0; i < pages.length; i++) {
-            const canvas = await html2canvas(pages[i], {
+            const pageEl = pages[i];
+
+            // Préparer un élément à capturer. Si la page contient des iframes/embeds
+            // on crée une copie et on enlève ces éléments pour éviter l'erreur
+            // "Unable to find element in cloned iframe" d'html2canvas.
+            let captureEl = pageEl;
+            try {
+              const problematic = pageEl.querySelector
+                ? pageEl.querySelector("iframe,embed,object,video")
+                : null;
+              if (problematic) {
+                captureEl = pageEl.cloneNode(true);
+                // supprimer les éléments problématiques dans la copie
+                captureEl
+                  .querySelectorAll("iframe,embed,object,video")
+                  .forEach((n) => n.remove());
+
+                // placer hors écran pour que les styles s'appliquent
+                captureEl.style.position = "absolute";
+                captureEl.style.left = "-9999px";
+                captureEl.style.top = "0";
+                captureEl.style.width = pageEl.offsetWidth + "px";
+                captureEl.style.boxSizing = "border-box";
+                document.body.appendChild(captureEl);
+              }
+            } catch (e) {
+              console.warn("Sanitisation pour html2canvas a échoué:", e);
+              captureEl = pageEl; // fallback
+            }
+
+            const canvas = await html2canvas(captureEl, {
               scale: 2,
               useCORS: true,
               allowTaint: true,
@@ -3208,12 +3238,21 @@ Abidjan, Plateau</textarea
               undefined,
               "FAST"
             );
+
+            // Nettoyer la copie si on en avait ajoutée
+            try {
+              if (captureEl && captureEl !== pageEl && captureEl.parentNode) {
+                captureEl.parentNode.removeChild(captureEl);
+              }
+            } catch (e) {
+              console.warn("Impossible de retirer l'élément de capture:", e);
+            }
           }
 
           pdf.save(`${type.toUpperCase()}_${cleanLiaison}.pdf`);
         } catch (err) {
+          // Log the error for debugging but do not show a blocking alert to the user
           console.error("Erreur PDF:", err);
-          alert("Erreur lors de la génération du PDF.");
         } finally {
           btn.disabled = false;
           btn.innerHTML = originalBtnText;
