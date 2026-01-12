@@ -372,6 +372,52 @@
         font-size: 12px;
       }
 
+      /* --- STRUCTURE RESPONSIVE DE BASE --- */
+
+      /* Masquer la sidebar sur mobile par défaut */
+      #app-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 100;
+        display: flex !important; /* Force le flex quand actif */
+      }
+
+      /* Afficher la sidebar sur PC */
+      @media (min-width: 768px) {
+        #app-sidebar {
+          position: relative;
+          transform: translateX(0);
+          display: flex !important;
+        }
+        #mobile-menu-btn {
+          display: none; /* Cache le bouton burger sur PC */
+        }
+      }
+
+      /* Cockpit (Dashboard) : Passer de 4 colonnes à 1 ou 2 sur mobile */
+      @media (max-width: 1024px) {
+        #view-dashboard .grid-cols-4 {
+          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        }
+      }
+
+      @media (max-width: 640px) {
+        #view-dashboard .grid-cols-4,
+        #view-dashboard .grid-cols-2 {
+          grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+        }
+
+        /* Ajustement des graphiques pour mobile */
+        .h-80 {
+          height: auto !important;
+          min-height: 300px;
+        }
+      }
+
       /* AJOUT POUR RESPONSIVENESS (Sidebar Mobile) */
       #app-sidebar.active {
         display: flex !important;
@@ -540,6 +586,54 @@
           .table-responsive table {
             min-width: 0;
             width: 100%;
+          }
+        }
+
+        /* --- OPTIMISATION RESPONSIVE ÉDITEUR DE RAPPORT --- */
+
+        @media (max-width: 1279px) {
+          /* On force l'empilement vertical au lieu du côte à côte */
+          #view-editor,
+          #view-invoice {
+            flex-direction: column !important;
+            height: auto !important; /* On laisse la page défiler naturellement */
+          }
+
+          /* Le formulaire prend toute la largeur */
+          #form-panel {
+            width: 100% !important;
+            max-height: none !important;
+            position: relative !important;
+          }
+
+          /* L'aperçu A4 s'adapte à la largeur du téléphone */
+          #preview-panel {
+            width: 100% !important;
+            padding: 10px !important;
+            background: #e2e8f0; /* Couleur de fond pour bien voir les bords */
+          }
+
+          /* On réduit l'échelle de la page A4 pour qu'elle ne dépasse pas */
+          .a4-page {
+            width: 100% !important;
+            height: auto !important;
+            min-height: 297mm; /* On garde les proportions A4 */
+            padding: 10mm !important;
+            transform: scale(1); /* Pas de zoom forcé */
+            transform-origin: top center;
+          }
+        }
+
+        /* Ajustement des grilles de photos dans le formulaire sur mobile */
+        @media (max-width: 640px) {
+          .photo-grid,
+          .photo-grid-3 {
+            grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+          }
+
+          /* On réduit la taille des titres pour gagner de la place */
+          .cover-title {
+            font-size: 1.8rem !important;
           }
         }
       }
@@ -1680,6 +1774,8 @@ Abidjan, Plateau</textarea
         if (id === "map") renderMapView();
         if (id === "invoice") upInv();
         if (id === "admin-users") renderAdminUsers();
+        window.scrollTo(0, 0); // Remonte en haut de page
+        document.getElementById("main-container").scrollTop = 0; // Remonte le scroll interne
       }
 
       // --- ADMIN USERS FUNCTIONS (NEW) ---
