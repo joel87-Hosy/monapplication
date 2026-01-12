@@ -14,12 +14,12 @@
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      integrity="sha255-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
       crossorigin=""
     />
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      integrity="sha255-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
       crossorigin=""
     ></script>
 
@@ -38,38 +38,6 @@
         overflow-y: auto; /* Permet le défilement vertical */
       }
 
-      /* Table responsive helper */
-      .table-responsive {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-      }
-      .table-responsive table {
-        min-width: 680px;
-      }
-      /* Ensure action buttons are visible and wrap on small screens */
-      .table-responsive .justify-end {
-        display: flex;
-        justify-content: flex-end;
-        gap: 8px;
-        flex-wrap: wrap;
-      }
-      .table-responsive button,
-      .table-responsive a {
-        display: inline-flex !important;
-        white-space: nowrap;
-      }
-      @media (max-width: 640px) {
-        .table-responsive table {
-          min-width: 520px;
-        }
-        .table-responsive th,
-        .table-responsive td {
-          white-space: normal;
-        }
-        .table-responsive .justify-end {
-          justify-content: flex-start;
-        }
-      }
       /* CORRECTION 3: Autoriser le défilement global sur l'app wrapper */
       #app-wrapper {
         display: none;
@@ -269,114 +237,6 @@
         font-size: 10px;
         margin-top: 4px;
         break-inside: avoid;
-      }
-      /* Responsive tweaks */
-      @media (max-width: 1279px) {
-        /* Make the A4 preview fluid on smaller screens */
-        .a4-page {
-          width: calc(100% - 32px);
-          height: auto;
-          padding: 16px;
-          margin: 0 auto 18px auto;
-          box-shadow: none;
-        }
-        .header-logos-container {
-          position: relative;
-          top: auto;
-          left: auto;
-          right: auto;
-          height: auto;
-          padding: 8px 0;
-          justify-content: center;
-          gap: 12px;
-          pointer-events: none;
-        }
-        .header-logo-img {
-          height: 40px;
-        }
-        .page-number {
-          position: relative;
-          bottom: auto;
-          right: auto;
-          text-align: right;
-          margin-top: 8px;
-        }
-
-        /* Layout adjustments */
-        #app-wrapper {
-          flex-direction: column;
-        }
-        aside#app-sidebar {
-          width: 100% !important;
-          position: relative;
-          display: none;
-        }
-        aside#app-sidebar.active {
-          display: flex;
-          position: fixed;
-          left: 0;
-          top: 0;
-          height: 100%;
-          z-index: 60;
-        }
-        main {
-          width: 100%;
-        }
-
-        /* Panels stack on mobile */
-        #view-editor,
-        #view-invoice {
-          flex-direction: column;
-        }
-        #form-panel {
-          width: 100% !important;
-          position: relative;
-        }
-        #preview-panel,
-        #invoice-preview-panel {
-          width: 100% !important;
-          padding: 12px;
-        }
-
-        /* Make photo grids adapt */
-        .photo-grid {
-          grid-template-columns: 1fr 1fr;
-        }
-        .photo-grid-3 {
-          grid-template-columns: 1fr 1fr 1fr;
-        }
-        .photo-container,
-        .photo-container-small {
-          height: auto;
-        }
-        .photo-container img,
-        .photo-container-small img {
-          width: 100%;
-          height: auto;
-        }
-
-        .login-box {
-          width: 92%;
-          max-width: 420px;
-          padding: 1.5rem;
-        }
-      }
-
-      @media (max-width: 640px) {
-        .cover-title {
-          font-size: 2rem;
-        }
-        .cover-liaison {
-          font-size: 1.2rem;
-          padding: 12px;
-        }
-        .cockpit-card {
-          padding: 12px;
-        }
-        .cockpit-icon-bg {
-          width: 40px;
-          height: 40px;
-        }
       }
       .data-table th {
         background: #f1f5f9;
@@ -959,25 +819,23 @@
             <div
               class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
             >
-              <div class="table-responsive">
-                <table class="w-full text-sm text-left">
-                  <thead
-                    class="bg-slate-50 uppercase text-xs text-slate-500 font-bold border-b"
-                  >
-                    <tr>
-                      <th class="px-6 py-4">Date</th>
-                      <th class="px-6 py-4">Liaison</th>
-                      <th class="px-6 py-4">Code / Intervenant</th>
-                      <th class="px-6 py-4">Statut</th>
-                      <th class="px-6 py-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody
-                    id="incidents-list-body"
-                    class="divide-y divide-slate-100"
-                  ></tbody>
-                </table>
-              </div>
+              <table class="w-full text-sm text-left">
+                <thead
+                  class="bg-slate-50 uppercase text-xs text-slate-500 font-bold border-b"
+                >
+                  <tr>
+                    <th class="px-6 py-4">Date</th>
+                    <th class="px-6 py-4">Liaison</th>
+                    <th class="px-6 py-4">Code / Intervenant</th>
+                    <th class="px-6 py-4">Statut</th>
+                    <th class="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody
+                  id="incidents-list-body"
+                  class="divide-y divide-slate-100"
+                ></tbody>
+              </table>
             </div>
           </div>
 
@@ -1067,8 +925,9 @@
                 </button>
                 <div class="grid grid-cols-2 gap-3">
                   <button
-                    class="btn-pdf-editor bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition"
-                    onclick="generatePDF(document.getElementById('report-type').value, document.getElementById('inp_report_code').value, this)"
+                    id="btn-pdf-editor"
+                    onclick="generatePDF(document.getElementById('report-type').value, document.getElementById('inp_report_code').value)"
+                    class="bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition"
                   >
                     <i class="fas fa-file-pdf mr-2"></i>PDF
                   </button>
@@ -1223,8 +1082,9 @@ Abidjan, Plateau</textarea
                 </button>
                 <div class="grid grid-cols-2 gap-3">
                   <button
-                    class="btn-pdf-editor bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition"
-                    onclick="generatePDF(document.getElementById('report-type').value, document.getElementById('inp_liaison').value, this)"
+                    id="btn-pdf-editor"
+                    onclick="generatePDF(document.getElementById('report-type').value, document.getElementById('inp_liaison').value)"
+                    class="bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition"
                   >
                     <i class="fas fa-file-pdf mr-2"></i>PDF
                   </button>
@@ -1413,21 +1273,19 @@ Abidjan, Plateau</textarea
             <div class="max-w-7xl mx-auto">
               <h2 class="text-2xl font-bold mb-4">Historique Global</h2>
               <div class="bg-white rounded-xl shadow overflow-hidden">
-                <div class="table-responsive">
-                  <table class="w-full text-sm text-left">
-                    <thead
-                      class="bg-slate-50 uppercase text-xs font-bold text-slate-500"
-                    >
-                      <tr>
-                        <th class="p-4">Date</th>
-                        <th class="p-4">Type</th>
-                        <th class="p-4">Code / Intervenant</th>
-                        <th class="p-4 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="full-history-body"></tbody>
-                  </table>
-                </div>
+                <table class="w-full text-sm text-left">
+                  <thead
+                    class="bg-slate-50 uppercase text-xs font-bold text-slate-500"
+                  >
+                    <tr>
+                      <th class="p-4">Date</th>
+                      <th class="p-4">Type</th>
+                      <th class="p-4">Code / Intervenant</th>
+                      <th class="p-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="full-history-body"></tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -1435,23 +1293,21 @@ Abidjan, Plateau</textarea
             <div class="max-w-7xl mx-auto">
               <h2 class="text-2xl font-bold mb-4">Proformas</h2>
               <div class="bg-white rounded-xl shadow overflow-hidden">
-                <div class="table-responsive">
-                  <table class="w-full text-sm text-left">
-                    <thead
-                      class="bg-slate-50 uppercase text-xs font-bold text-slate-500"
-                    >
-                      <tr>
-                        <th class="p-4">Date</th>
-                        <th class="p-4">N°</th>
-                        <th class="p-4">Client</th>
-                        <th class="p-4">Total</th>
-                        <th class="p-4">Statut</th>
-                        <th class="p-4 text-right">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody id="full-invoices-body"></tbody>
-                  </table>
-                </div>
+                <table class="w-full text-sm text-left">
+                  <thead
+                    class="bg-slate-50 uppercase text-xs font-bold text-slate-500"
+                  >
+                    <tr>
+                      <th class="p-4">Date</th>
+                      <th class="p-4">N°</th>
+                      <th class="p-4">Client</th>
+                      <th class="p-4">Total</th>
+                      <th class="p-4">Statut</th>
+                      <th class="p-4 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="full-invoices-body"></tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -1504,20 +1360,18 @@ Abidjan, Plateau</textarea
                 <h3 class="text-lg font-black text-slate-800 p-4 border-b">
                   Liste des Comptes
                 </h3>
-                <div class="table-responsive">
-                  <table class="w-full text-sm text-left">
-                    <thead
-                      class="bg-slate-50 uppercase text-xs font-bold text-slate-500"
-                    >
-                      <tr>
-                        <th class="p-4">Identifiant</th>
-                        <th class="p-4">Rôle</th>
-                        <th class="p-4 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody id="admin-users-list"></tbody>
-                  </table>
-                </div>
+                <table class="w-full text-sm text-left">
+                  <thead
+                    class="bg-slate-50 uppercase text-xs font-bold text-slate-500"
+                  >
+                    <tr>
+                      <th class="p-4">Identifiant</th>
+                      <th class="p-4">Rôle</th>
+                      <th class="p-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-users-list"></tbody>
+                </table>
               </div>
             </div>
 
@@ -1527,72 +1381,68 @@ Abidjan, Plateau</textarea
               <h3 class="text-lg font-black text-slate-800 p-4 border-b">
                 Droits et Permissions
               </h3>
-              <div class="table-responsive">
-                <table class="w-full text-xs text-left">
-                  <thead class="bg-slate-50 uppercase font-bold text-slate-500">
-                    <tr>
-                      <th class="p-3 w-1/3">Action / Module</th>
-                      <th class="p-3 text-center text-blue-600">Technicien</th>
-                      <th class="p-3 text-pink-600">Manager (Admin)</th>
-                      <th class="p-3 text-green-600">Validateur (Client)</th>
-                    </tr>
-                  </thead>
-                  <tbody id="permissions-table-body">
-                    <tr>
-                      <td class="p-3 border-b">Créer / Modifier un Rapport</td>
-                      <td class="text-center">
-                        <i class="fas fa-check text-blue-500"></i>
-                      </td>
-                      <td><i class="fas fa-check text-pink-500"></i></td>
-                      <td><i class="fas fa-times text-red-500"></i></td>
-                    </tr>
-                    <tr>
-                      <td class="p-3 border-b">Accès au Cockpit & Archive</td>
-                      <td class="text-center">
-                        <i class="fas fa-check text-blue-500"></i>
-                      </td>
-                      <td><i class="fas fa-check text-pink-500"></i></td>
-                      <td><i class="fas fa-check text-green-500"></i></td>
-                    </tr>
-                    <tr>
-                      <td class="p-3 border-b">Accès Finance (Proforma)</td>
-                      <td class="text-center">
-                        <i class="fas fa-times text-red-500"></i>
-                      </td>
-                      <td><i class="fas fa-check text-pink-500"></i></td>
-                      <td><i class="fas fa-check text-green-500"></i></td>
-                    </tr>
-                    <tr>
-                      <td class="p-3 border-b">Créer / Modifier un Proforma</td>
-                      <td class="text-center">
-                        <i class="fas fa-times text-red-500"></i>
-                      </td>
-                      <td><i class="fas fa-check text-pink-500"></i></td>
-                      <td><i class="fas fa-times text-red-500"></i></td>
-                    </tr>
-                    <tr>
-                      <td class="p-3 border-b">
-                        Valider un Proforma (Finaliser)
-                      </td>
-                      <td class="text-center">
-                        <i class="fas fa-times text-red-500"></i>
-                      </td>
-                      <td><i class="fas fa-check text-pink-500"></i></td>
-                      <td><i class="fas fa-check text-green-500"></i></td>
-                    </tr>
-                    <tr>
-                      <td class="p-3 border-b font-bold">
-                        Accès Administration
-                      </td>
-                      <td class="text-center">
-                        <i class="fas fa-times text-red-500"></i>
-                      </td>
-                      <td><i class="fas fa-check text-pink-500"></i></td>
-                      <td><i class="fas fa-times text-red-500"></i></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <table class="w-full text-xs text-left">
+                <thead class="bg-slate-50 uppercase font-bold text-slate-500">
+                  <tr>
+                    <th class="p-3 w-1/3">Action / Module</th>
+                    <th class="p-3 text-center text-blue-600">Technicien</th>
+                    <th class="p-3 text-pink-600">Manager (Admin)</th>
+                    <th class="p-3 text-green-600">Validateur (Client)</th>
+                  </tr>
+                </thead>
+                <tbody id="permissions-table-body">
+                  <tr>
+                    <td class="p-3 border-b">Créer / Modifier un Rapport</td>
+                    <td class="text-center">
+                      <i class="fas fa-check text-blue-500"></i>
+                    </td>
+                    <td><i class="fas fa-check text-pink-500"></i></td>
+                    <td><i class="fas fa-times text-red-500"></i></td>
+                  </tr>
+                  <tr>
+                    <td class="p-3 border-b">Accès au Cockpit & Archive</td>
+                    <td class="text-center">
+                      <i class="fas fa-check text-blue-500"></i>
+                    </td>
+                    <td><i class="fas fa-check text-pink-500"></i></td>
+                    <td><i class="fas fa-check text-green-500"></i></td>
+                  </tr>
+                  <tr>
+                    <td class="p-3 border-b">Accès Finance (Proforma)</td>
+                    <td class="text-center">
+                      <i class="fas fa-times text-red-500"></i>
+                    </td>
+                    <td><i class="fas fa-check text-pink-500"></i></td>
+                    <td><i class="fas fa-check text-green-500"></i></td>
+                  </tr>
+                  <tr>
+                    <td class="p-3 border-b">Créer / Modifier un Proforma</td>
+                    <td class="text-center">
+                      <i class="fas fa-times text-red-500"></i>
+                    </td>
+                    <td><i class="fas fa-check text-pink-500"></i></td>
+                    <td><i class="fas fa-times text-red-500"></i></td>
+                  </tr>
+                  <tr>
+                    <td class="p-3 border-b">
+                      Valider un Proforma (Finaliser)
+                    </td>
+                    <td class="text-center">
+                      <i class="fas fa-times text-red-500"></i>
+                    </td>
+                    <td><i class="fas fa-check text-pink-500"></i></td>
+                    <td><i class="fas fa-check text-green-500"></i></td>
+                  </tr>
+                  <tr>
+                    <td class="p-3 border-b font-bold">Accès Administration</td>
+                    <td class="text-center">
+                      <i class="fas fa-times text-red-500"></i>
+                    </td>
+                    <td><i class="fas fa-check text-pink-500"></i></td>
+                    <td><i class="fas fa-times text-red-500"></i></td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -1632,9 +1482,6 @@ Abidjan, Plateau</textarea
       let currentUser = null,
         currentReportIndex = null,
         currentInvoiceIndex = null;
-      let realtimeClockInterval = null;
-
-      currentInvoiceIndex = null;
       let boqData = [{ item: "", qty: "" }],
         imagesData = {},
         surveillanceImages = [],
@@ -1971,12 +1818,6 @@ Abidjan, Plateau</textarea
                       ? `<img src="${step.img}" class="h-16 w-full object-cover mt-2 rounded">`
                       : ""
                   }
-                  <div class="mt-2">
-                      <label class="text-[10px] font-bold text-slate-400 uppercase">Position GPS de l'élément</label>
-                      <input class="form-input text-xs mt-1" placeholder="Lat, Long" value="${
-                        step.gps || ""
-                      }" oninput="gcData[${i}].gps=this.value;renderPreview()">
-                  </div>
               </div>
           `
           )
@@ -1984,7 +1825,7 @@ Abidjan, Plateau</textarea
       }
 
       function addGCStep() {
-        gcData.push({ type: "Poteau", etat: "Bon", img: "", gps: "" });
+        gcData.push({ type: "Poteau", etat: "Bon", img: "" });
         renderGCStepEditor();
         renderPreview();
       }
@@ -2013,14 +1854,6 @@ Abidjan, Plateau</textarea
         }
 
         addInp(c, "liaison", "Liaison", "text");
-        // Date du rapport (défaut aujourd'hui) — évite 'undefined' dans l'aperçu
-        addInp(
-          c,
-          "date_rapport",
-          "Date",
-          "date",
-          new Date().toISOString().slice(0, 10)
-        );
         c.innerHTML += `<div class="grid grid-cols-2 gap-2"><div><label class="text-[10px] font-bold text-slate-400 uppercase">Zone</label><select id="inp_zone" class="form-input font-bold" onchange="renderPreview()"><option>Abidjan</option><option>Intérieur</option></select></div><div><label class="text-[10px] font-bold text-slate-400 uppercase">Ville</label><input id="inp_ville" class="form-input" oninput="renderPreview()"></div></div>`;
         // --- NOUVEAU CODE : MULTI-SÉLECTION ÉQUIPES ---
         const teamOptions = [
@@ -2185,23 +2018,6 @@ Abidjan, Plateau</textarea
             "B vers A",
           ]);
 
-          // Date & Heure en temps réel
-          addSection(c, "Date & Heure");
-          addInp(
-            c,
-            "date_gc",
-            "Date du jour",
-            "text",
-            new Date().toLocaleDateString()
-          );
-          addInp(
-            c,
-            "time_gc",
-            "Heure (temps réel)",
-            "text",
-            new Date().toLocaleTimeString()
-          );
-
           addSection(c, "Parcours du Génie Civil");
           c.innerHTML += `<div id="gc-steps-editor" class="space-y-3"></div>
                           <button onclick="addGCStep()" class="w-full bg-blue-600 text-white p-2 rounded-lg font-bold text-xs mt-2">
@@ -2213,7 +2029,7 @@ Abidjan, Plateau</textarea
           const btnsDiv = document.createElement("div");
           btnsDiv.className = "mt-3 flex gap-2";
           btnsDiv.innerHTML = `
-            <button type="button" onclick="generatePDF('marche_gc', document.getElementById('inp_report_code')?.value, this)" class="w-1/2 bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition">
+            <button type="button" onclick="generatePDF('marche_gc', document.getElementById('inp_report_code')?.value)" class="w-1/2 bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition">
               <i class="fas fa-file-pdf mr-2"></i> Générer PDF
             </button>
             <button type="button" onclick="saveReport()" class="w-1/2 bg-green-600 text-white p-3 rounded-lg font-bold text-sm hover:bg-green-500 transition">
@@ -2266,17 +2082,11 @@ Abidjan, Plateau</textarea
               <tr>
                 <td class="text-center font-bold">${s.type}</td>
                 <td class="text-center">${s.etat}</td>
-                <td class="p-1">
-                  ${
-                    s.img
-                      ? `<div><img src="${
-                          s.img
-                        }" style="height:60px; width:100%; object-fit:cover; border-radius:4px;"></div><div class="text-xs italic text-slate-500 mt-1">${
-                          s.gps || ""
-                        }</div>`
-                      : `<div class="text-xs italic text-slate-400">Aucune photo</div>`
-                  }
-                </td>
+                <td class="p-1">${
+                  s.img
+                    ? `<img src="${s.img}" style="height:40px; width:100%; object-fit:cover; border-radius:4px;">`
+                    : ""
+                }</td>
               </tr>
             `
           )
@@ -2287,9 +2097,6 @@ Abidjan, Plateau</textarea
           html: `<div class="report-block">
                   <div class="section-header">RÉSUMÉ DU PARCOURS GC</div>
                   <table class="data-table">
-                    <tr><th>Date / Heure</th><td>${val("date_gc") || ""} ${
-            val("time_gc") || ""
-          }</td></tr>
                     <tr><th>Départ A</th><td>${val("site_a")} (${val(
             "gps_a"
           )})</td></tr>
@@ -2411,22 +2218,7 @@ Abidjan, Plateau</textarea
       }
 
       function renderPreview() {
-        let container = document.getElementById("report-pages-container");
-        // Si le conteneur d'aperçu est manquant (petits écrans ou DOM modifié), le créer dynamiquement
-        if (!container) {
-          const previewPanel = document.getElementById("preview-panel");
-          if (previewPanel) {
-            container = document.createElement("div");
-            container.id = "report-pages-container";
-            container.className = "flex flex-col gap-8 w-full items-center";
-            previewPanel.prepend(container);
-          } else {
-            console.warn(
-              "Impossible de trouver #preview-panel pour créer #report-pages-container"
-            );
-            return;
-          }
-        }
+        const container = document.getElementById("report-pages-container");
         container.innerHTML = "";
 
         const t = document.getElementById("report-type").value;
@@ -2504,15 +2296,6 @@ Abidjan, Plateau</textarea
                                     <p class="text-lg"><strong>Zone:</strong> ${val(
                                       "zone"
                                     )} - ${val("ville")}</p>
-                                    ${
-                                      t === "marche_gc"
-                                        ? `<p class="text-lg"><strong>Date du jour:</strong> ${val(
-                                            "date_gc"
-                                          )}</p><p class="text-lg"><strong>Heure:</strong> ${val(
-                                            "time_gc"
-                                          )}</p>`
-                                        : ``
-                                    }
                                     ${
                                       (t === "incident" ||
                                         t === "survey_terrain") &&
@@ -3132,31 +2915,13 @@ Abidjan, Plateau</textarea
       }
 
       // CORRECTION : Utilisation de async pour permettre l'attente du rendu de chaque page
-      async function generatePDF(type, liaisonName, btnElement) {
+      async function generatePDF(type, liaisonName) {
         const { jsPDF } = window.jspdf;
         // On cible précisément les pages A4 générées dans l'aperçu
-        let pages = document.querySelectorAll(
+        const pages = document.querySelectorAll(
           "#report-pages-container .a4-page"
         );
-
-        // Si aucune page n'est trouvée (par ex. preview non rendue sur petit écran), forcer le rendu puis réessayer
-        if (!pages || pages.length === 0) {
-          try {
-            renderPreview();
-          } catch (e) {
-            console.warn("renderPreview() a échoué:", e);
-          }
-          // attendre un court instant pour que le DOM se mette à jour
-          await new Promise((r) => setTimeout(r, 300));
-          pages = document.querySelectorAll("#report-pages-container .a4-page");
-        }
-        // Prefer the passed button (the one clicked). Fallback to the first element with class .btn-pdf-editor or a safe temporary element.
-        let btn = btnElement || document.querySelector(".btn-pdf-editor");
-        if (!btn) {
-          btn = document.createElement("button");
-          btn.disabled = false;
-          btn.innerHTML = "";
-        }
+        const btn = document.getElementById("btn-pdf-editor");
 
         if (pages.length === 0) {
           alert("L'aperçu est vide. Veuillez remplir le formulaire.");
@@ -3173,54 +2938,8 @@ Abidjan, Plateau</textarea
 
         // UI : Feedback visuel
         btn.disabled = true;
-        const originalBtnText = btn.innerHTML || "PDF";
+        const originalBtnText = btn.innerHTML;
         btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>...';
-
-        // Ouvrir une fenêtre vide immédiatement pour éviter que l'ouverture
-        // du Blob plus tard soit bloquée par le bloqueur de popups.
-        let previewWindow = null;
-        try {
-          previewWindow = window.open("", "_blank");
-          if (previewWindow && previewWindow.document) {
-            previewWindow.document.write("<title>Génération PDF...</title>");
-          }
-        } catch (e) {
-          previewWindow = null;
-        }
-
-        // Helper: attendre que les images d'un élément soient chargées
-        const waitForImages = (el, timeout = 4000) => {
-          return new Promise((resolve) => {
-            try {
-              const imgs = Array.from(el.querySelectorAll("img"));
-              if (imgs.length === 0) return resolve();
-              let finished = 0;
-              const check = () => {
-                finished++;
-                if (finished >= imgs.length) resolve();
-              };
-              imgs.forEach((img) => {
-                if (img.complete && img.naturalWidth !== 0) return check();
-                const onDone = () => {
-                  img.removeEventListener("load", onDone);
-                  img.removeEventListener("error", onDone);
-                  check();
-                };
-                img.addEventListener("load", onDone);
-                img.addEventListener("error", onDone);
-                setTimeout(() => {
-                  try {
-                    img.removeEventListener("load", onDone);
-                    img.removeEventListener("error", onDone);
-                    check();
-                  } catch (e) {}
-                }, timeout);
-              });
-            } catch (e) {
-              resolve();
-            }
-          });
-        };
 
         const pdf = new jsPDF({
           orientation: "p",
@@ -3231,148 +2950,13 @@ Abidjan, Plateau</textarea
 
         try {
           // Boucle sur chaque page de l'aperçu pour les capturer une par une
-          const skippedPages = [];
-          let capturedPages = 0;
           for (let i = 0; i < pages.length; i++) {
-            const pageEl = pages[i];
-
-            // Préparer un élément à capturer. Si la page contient des iframes/embeds
-            // on crée une copie et on enlève ces éléments pour éviter l'erreur
-            // "Unable to find element in cloned iframe" d'html2canvas.
-            let captureEl = pageEl;
-            try {
-              const problematic = pageEl.querySelector
-                ? pageEl.querySelector("iframe,embed,object,video")
-                : null;
-              if (problematic) {
-                captureEl = pageEl.cloneNode(true);
-                // supprimer les éléments problématiques dans la copie
-                // Remplacer les iframes/embeds dans la copie par des équivalents
-                // Ne pas accéder au contenu cross-origin pour éviter les erreurs
-                const cloneNodes = captureEl.querySelectorAll(
-                  "iframe,embed,object,video"
-                );
-                cloneNodes.forEach((cloneNode) => {
-                  try {
-                    const tag = cloneNode.tagName.toLowerCase();
-                    const src =
-                      cloneNode.getAttribute("src") ||
-                      cloneNode.getAttribute("data") ||
-                      "";
-
-                    // Remplacer les sources d'image par <img>
-                    if (
-                      src &&
-                      (/\.(png|jpe?g|gif|svg|webp)(\?|$)/i.test(src) ||
-                        src.startsWith("data:image"))
-                    ) {
-                      const img = document.createElement("img");
-                      img.src = src;
-                      img.style.width = cloneNode.style.width || "100%";
-                      img.style.height = cloneNode.style.height || "auto";
-                      img.style.objectFit = "contain";
-                      cloneNode.parentNode.replaceChild(img, cloneNode);
-                      return;
-                    }
-
-                    // Pour les vidéos, utiliser l'attribut poster si disponible
-                    if (tag === "video") {
-                      const poster = cloneNode.getAttribute("poster") || "";
-                      if (poster) {
-                        const img = document.createElement("img");
-                        img.src = poster;
-                        img.style.width = cloneNode.style.width || "100%";
-                        img.style.height = cloneNode.style.height || "auto";
-                        img.style.objectFit = "cover";
-                        cloneNode.parentNode.replaceChild(img, cloneNode);
-                        return;
-                      }
-                    }
-
-                    // Fallback: placeholder neutre (évite toute interaction réseau/DOM externe)
-                    const placeholder = document.createElement("div");
-                    placeholder.style.display = "flex";
-                    placeholder.style.alignItems = "center";
-                    placeholder.style.justifyContent = "center";
-                    placeholder.style.width = cloneNode.style.width || "100%";
-                    placeholder.style.height =
-                      cloneNode.style.height ||
-                      (cloneNode.offsetHeight
-                        ? cloneNode.offsetHeight + "px"
-                        : "150px");
-                    placeholder.style.background = "#f8fafc";
-                    placeholder.style.border = "1px dashed #cbd5e1";
-                    placeholder.style.color = "#374151";
-                    placeholder.style.fontSize = "12px";
-                    placeholder.innerText = src
-                      ? `Contenu externe: ${src}`
-                      : "Contenu externe non affichable";
-                    cloneNode.parentNode.replaceChild(placeholder, cloneNode);
-                  } catch (errReplace) {
-                    try {
-                      cloneNode.remove();
-                    } catch (e) {}
-                  }
-                });
-
-                // placer hors écran pour que les styles s'appliquent
-                captureEl.style.position = "absolute";
-                captureEl.style.left = "-9999px";
-                captureEl.style.top = "0";
-                captureEl.style.width = pageEl.offsetWidth + "px";
-                captureEl.style.boxSizing = "border-box";
-                document.body.appendChild(captureEl);
-              }
-            } catch (e) {
-              console.warn("Sanitisation pour html2canvas a échoué:", e);
-              captureEl = pageEl; // fallback
-            }
-
-            let canvas;
-            try {
-              // attendre que les images internes soient chargées avant capture
-              try {
-                await waitForImages(captureEl, 3000);
-              } catch (e) {}
-
-              canvas = await html2canvas(captureEl, {
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: "#ffffff",
-              });
-            } catch (pageErr) {
-              // Si l'erreur concerne un iframe cloné, on logge et on saute la page
-              if (
-                pageErr &&
-                pageErr.message &&
-                pageErr.message.includes("cloned iframe")
-              ) {
-                console.warn(
-                  `html2canvas skip page ${i} due to iframe clone issue:`,
-                  pageErr
-                );
-                skippedPages.push(i);
-                // Nettoyer la copie le cas échéant
-                try {
-                  if (
-                    captureEl &&
-                    captureEl !== pageEl &&
-                    captureEl.parentNode
-                  ) {
-                    captureEl.parentNode.removeChild(captureEl);
-                  }
-                } catch (e) {
-                  console.warn(
-                    "Impossible de retirer l'élément de capture:",
-                    e
-                  );
-                }
-                continue; // passer à la page suivante
-              }
-              // Pour d'autres erreurs, ré-échouer
-              throw pageErr;
-            }
+            const canvas = await html2canvas(pages[i], {
+              scale: 2,
+              useCORS: true,
+              allowTaint: true,
+              backgroundColor: "#ffffff",
+            });
 
             const imgData = canvas.toDataURL("image/jpeg", 0.95);
             const pdfWidth = pdf.internal.pageSize.getWidth();
@@ -3389,53 +2973,12 @@ Abidjan, Plateau</textarea
               undefined,
               "FAST"
             );
-            capturedPages++;
-
-            // Nettoyer la copie si on en avait ajoutée
-            try {
-              if (captureEl && captureEl !== pageEl && captureEl.parentNode) {
-                captureEl.parentNode.removeChild(captureEl);
-              }
-            } catch (e) {
-              console.warn("Impossible de retirer l'élément de capture:", e);
-            }
           }
 
-          if (capturedPages === 0) {
-            console.warn(
-              "Aucune page capturée pour le PDF — annulation de la sauvegarde."
-            );
-            throw new Error("Aucune page capturée");
-          }
-
-          // Générer un Blob et ouvrir dans la fenêtre créée plus tôt (si possible),
-          // puis déclencher le téléchargement.
-          const blob = pdf.output("blob");
-          const url = URL.createObjectURL(blob);
-          try {
-            if (previewWindow && !previewWindow.closed) {
-              previewWindow.location.href = url;
-            } else {
-              window.open(url, "_blank");
-            }
-          } catch (e) {
-            window.open(url, "_blank");
-          }
-
-          try {
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `${type.toUpperCase()}_${cleanLiaison}.pdf`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            setTimeout(() => URL.revokeObjectURL(url), 60000);
-          } catch (e) {
-            console.warn("Téléchargement automatique échoué:", e);
-          }
+          pdf.save(`${type.toUpperCase()}_${cleanLiaison}.pdf`);
         } catch (err) {
-          // Log the error for debugging but do not show a blocking alert to the user
           console.error("Erreur PDF:", err);
+          alert("Erreur lors de la génération du PDF.");
         } finally {
           btn.disabled = false;
           btn.innerHTML = originalBtnText;
@@ -4243,15 +3786,7 @@ Abidjan, Plateau</textarea
         c.innerHTML = survData
           .map(
             (s, i) =>
-              `<div class="flex gap-1 mb-1"><input type="date" class="form-input w-1/4" value="${
-                s.date || ""
-              }" onchange="survData[${i}].date=this.value;renderPreview()"><input class="form-input w-1/4" placeholder="Axe" value="${
-                s.axe || ""
-              }" oninput="survData[${i}].axe=this.value;renderPreview()"><input type="time" class="form-input w-1/6" value="${
-                s.heure || ""
-              }" onchange="survData[${i}].heure=this.value;renderPreview()"><input class="form-input w-1/3" placeholder="Obs" value="${
-                s.obs || ""
-              }" oninput="survData[${i}].obs=this.value;renderPreview()"></div>`
+              `<div class="flex gap-1 mb-1"><input type="date" class="form-input w-1/4" value="${s.date}" onchange="survData[${i}].date=this.value;renderPreview()"><input class="form-input w-1/4" placeholder="Axe" value="${s.axe}" oninput="survData[${i}].axe=this.value;renderPreview()"><input type="time" class="form-input w-1/6" value="${s.heure}" onchange="survData[${i}].heure=this.value;renderPreview()"><input class="form-input w-1/3" placeholder="Obs" value="${s.obs}" oninput="survData[${i}].obs=this.value;renderPreview()"></div>`
           )
           .join("");
       }
@@ -4313,12 +3848,6 @@ Abidjan, Plateau</textarea
         .join("");
       checkAuth();
       loadDraft();
-      // Start live clock for marche GC form
-      try {
-        startRealtimeClock();
-      } catch (e) {
-        /* ignore if not ready */
-      }
 
       // Fonction de mise à jour globale pour la multi-sélection
       function updateTeamsValue() {
@@ -4358,29 +3887,6 @@ Abidjan, Plateau</textarea
         } catch (e) {
           // ignore if called before full init
         }
-      }
-
-      // Démarre l'horloge en temps réel qui met à jour les champs date_gc et time_gc
-      function startRealtimeClock() {
-        if (realtimeClockInterval) return; // déjà lancé
-        function tick() {
-          const dEl = document.getElementById("inp_date_gc");
-          const tEl = document.getElementById("inp_time_gc");
-          const now = new Date();
-          if (dEl) dEl.value = now.toLocaleDateString();
-          if (tEl) tEl.value = now.toLocaleTimeString();
-        }
-        tick();
-        realtimeClockInterval = setInterval(() => {
-          try {
-            tick();
-            // Mettre à jour l'aperçu seulement si présent
-            if (document.getElementById("dynamic-form-fields")) renderPreview();
-            saveDraft();
-          } catch (e) {
-            // ignore
-          }
-        }, 1000);
       }
     </script>
   </body>
