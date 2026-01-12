@@ -509,10 +509,43 @@
           width: 70%;
           display: block !important;
         }
+        /* --- Responsive on-screen helpers --- */
+        img {
+          max-width: 100%;
+          height: auto;
+          display: block;
+        }
+        .a4-page {
+          max-width: 100%;
+          box-sizing: border-box;
+          overflow: hidden;
+        }
+        @media (max-width: 640px) {
+          .a4-page {
+            padding: 12px !important;
+            width: auto !important;
+            height: auto !important;
+            position: relative !important;
+          }
+          #form-panel {
+            width: 100% !important;
+          }
+          #preview-panel {
+            width: 100% !important;
+            padding: 16px !important;
+          }
+          #main-container {
+            padding: 12px !important;
+          }
+          .table-responsive table {
+            min-width: 0;
+            width: 100%;
+          }
+        }
       }
     </style>
   </head>
-  <body class="flex h-screen w-screen">
+  <body class="flex min-h-screen w-full">
     <div id="login-overlay">
       <div class="login-box">
         <h1 class="text-4xl font-black text-pink-600 mb-2 tracking-tighter">
@@ -562,7 +595,7 @@
       </div>
     </div>
 
-    <div id="app-wrapper" class="flex flex-1 w-screen">
+    <div id="app-wrapper" class="flex flex-1 w-full">
       <aside
         id="app-sidebar"
         class="w-72 bg-slate-900 text-white hidden md:flex flex-col shadow-2xl z-20 no-print"
