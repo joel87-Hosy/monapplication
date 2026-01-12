@@ -1067,9 +1067,8 @@
                 </button>
                 <div class="grid grid-cols-2 gap-3">
                   <button
-                    id="btn-pdf-editor"
+                    class="btn-pdf-editor bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition"
                     onclick="generatePDF(document.getElementById('report-type').value, document.getElementById('inp_report_code').value, this)"
-                    class="bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition"
                   >
                     <i class="fas fa-file-pdf mr-2"></i>PDF
                   </button>
@@ -1224,9 +1223,8 @@ Abidjan, Plateau</textarea
                 </button>
                 <div class="grid grid-cols-2 gap-3">
                   <button
-                    id="btn-pdf-editor"
+                    class="btn-pdf-editor bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition"
                     onclick="generatePDF(document.getElementById('report-type').value, document.getElementById('inp_liaison').value, this)"
-                    class="bg-slate-800 text-white p-3 rounded-lg font-bold text-sm hover:bg-slate-700 transition"
                   >
                     <i class="fas fa-file-pdf mr-2"></i>PDF
                   </button>
@@ -2413,7 +2411,22 @@ Abidjan, Plateau</textarea
       }
 
       function renderPreview() {
-        const container = document.getElementById("report-pages-container");
+        let container = document.getElementById("report-pages-container");
+        // Si le conteneur d'aperçu est manquant (petits écrans ou DOM modifié), le créer dynamiquement
+        if (!container) {
+          const previewPanel = document.getElementById("preview-panel");
+          if (previewPanel) {
+            container = document.createElement("div");
+            container.id = "report-pages-container";
+            container.className = "flex flex-col gap-8 w-full items-center";
+            previewPanel.prepend(container);
+          } else {
+            console.warn(
+              "Impossible de trouver #preview-panel pour créer #report-pages-container"
+            );
+            return;
+          }
+        }
         container.innerHTML = "";
 
         const t = document.getElementById("report-type").value;
@@ -3122,11 +3135,23 @@ Abidjan, Plateau</textarea
       async function generatePDF(type, liaisonName, btnElement) {
         const { jsPDF } = window.jspdf;
         // On cible précisément les pages A4 générées dans l'aperçu
-        const pages = document.querySelectorAll(
+        let pages = document.querySelectorAll(
           "#report-pages-container .a4-page"
         );
-        // Prefer the passed button (the one clicked). Fallback to existing id or a safe temporary element.
-        let btn = btnElement || document.getElementById("btn-pdf-editor");
+
+        // Si aucune page n'est trouvée (par ex. preview non rendue sur petit écran), forcer le rendu puis réessayer
+        if (!pages || pages.length === 0) {
+          try {
+            renderPreview();
+          } catch (e) {
+            console.warn("renderPreview() a échoué:", e);
+          }
+          // attendre un court instant pour que le DOM se mette à jour
+          await new Promise((r) => setTimeout(r, 300));
+          pages = document.querySelectorAll("#report-pages-container .a4-page");
+        }
+        // Prefer the passed button (the one clicked). Fallback to the first element with class .btn-pdf-editor or a safe temporary element.
+        let btn = btnElement || document.querySelector(".btn-pdf-editor");
         if (!btn) {
           btn = document.createElement("button");
           btn.disabled = false;
