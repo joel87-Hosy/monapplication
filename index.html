@@ -3173,8 +3173,54 @@ Abidjan, Plateau</textarea
 
         // UI : Feedback visuel
         btn.disabled = true;
-        const originalBtnText = btn.innerHTML;
+        const originalBtnText = btn.innerHTML || "PDF";
         btn.innerHTML = '<i class="fas fa-spinner animate-spin"></i>...';
+
+        // Ouvrir une fenêtre vide immédiatement pour éviter que l'ouverture
+        // du Blob plus tard soit bloquée par le bloqueur de popups.
+        let previewWindow = null;
+        try {
+          previewWindow = window.open("", "_blank");
+          if (previewWindow && previewWindow.document) {
+            previewWindow.document.write("<title>Génération PDF...</title>");
+          }
+        } catch (e) {
+          previewWindow = null;
+        }
+
+        // Helper: attendre que les images d'un élément soient chargées
+        const waitForImages = (el, timeout = 4000) => {
+          return new Promise((resolve) => {
+            try {
+              const imgs = Array.from(el.querySelectorAll("img"));
+              if (imgs.length === 0) return resolve();
+              let finished = 0;
+              const check = () => {
+                finished++;
+                if (finished >= imgs.length) resolve();
+              };
+              imgs.forEach((img) => {
+                if (img.complete && img.naturalWidth !== 0) return check();
+                const onDone = () => {
+                  img.removeEventListener("load", onDone);
+                  img.removeEventListener("error", onDone);
+                  check();
+                };
+                img.addEventListener("load", onDone);
+                img.addEventListener("error", onDone);
+                setTimeout(() => {
+                  try {
+                    img.removeEventListener("load", onDone);
+                    img.removeEventListener("error", onDone);
+                    check();
+                  } catch (e) {}
+                }, timeout);
+              });
+            } catch (e) {
+              resolve();
+            }
+          });
+        };
 
         const pdf = new jsPDF({
           orientation: "p",
@@ -3186,6 +3232,7 @@ Abidjan, Plateau</textarea
         try {
           // Boucle sur chaque page de l'aperçu pour les capturer une par une
           const skippedPages = [];
+          let capturedPages = 0;
           for (let i = 0; i < pages.length; i++) {
             const pageEl = pages[i];
 
@@ -3283,6 +3330,11 @@ Abidjan, Plateau</textarea
 
             let canvas;
             try {
+              // attendre que les images internes soient chargées avant capture
+              try {
+                await waitForImages(captureEl, 3000);
+              } catch (e) {}
+
               canvas = await html2canvas(captureEl, {
                 scale: 2,
                 useCORS: true,
@@ -3337,6 +3389,7 @@ Abidjan, Plateau</textarea
               undefined,
               "FAST"
             );
+            capturedPages++;
 
             // Nettoyer la copie si on en avait ajoutée
             try {
@@ -3348,7 +3401,38 @@ Abidjan, Plateau</textarea
             }
           }
 
-          pdf.save(`${type.toUpperCase()}_${cleanLiaison}.pdf`);
+          if (capturedPages === 0) {
+            console.warn(
+              "Aucune page capturée pour le PDF — annulation de la sauvegarde."
+            );
+            throw new Error("Aucune page capturée");
+          }
+
+          // Générer un Blob et ouvrir dans la fenêtre créée plus tôt (si possible),
+          // puis déclencher le téléchargement.
+          const blob = pdf.output("blob");
+          const url = URL.createObjectURL(blob);
+          try {
+            if (previewWindow && !previewWindow.closed) {
+              previewWindow.location.href = url;
+            } else {
+              window.open(url, "_blank");
+            }
+          } catch (e) {
+            window.open(url, "_blank");
+          }
+
+          try {
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${type.toUpperCase()}_${cleanLiaison}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 60000);
+          } catch (e) {
+            console.warn("Téléchargement automatique échoué:", e);
+          }
         } catch (err) {
           // Log the error for debugging but do not show a blocking alert to the user
           console.error("Erreur PDF:", err);
