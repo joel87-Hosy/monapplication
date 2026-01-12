@@ -3185,6 +3185,7 @@ Abidjan, Plateau</textarea
 
         try {
           // Boucle sur chaque page de l'aperçu pour les capturer une par une
+          const skippedPages = [];
           for (let i = 0; i < pages.length; i++) {
             const pageEl = pages[i];
 
@@ -3199,9 +3200,73 @@ Abidjan, Plateau</textarea
               if (problematic) {
                 captureEl = pageEl.cloneNode(true);
                 // supprimer les éléments problématiques dans la copie
-                captureEl
-                  .querySelectorAll("iframe,embed,object,video")
-                  .forEach((n) => n.remove());
+                // Remplacer les iframes/embeds dans la copie par des équivalents
+                // Ne pas accéder au contenu cross-origin pour éviter les erreurs
+                const cloneNodes = captureEl.querySelectorAll(
+                  "iframe,embed,object,video"
+                );
+                cloneNodes.forEach((cloneNode) => {
+                  try {
+                    const tag = cloneNode.tagName.toLowerCase();
+                    const src =
+                      cloneNode.getAttribute("src") ||
+                      cloneNode.getAttribute("data") ||
+                      "";
+
+                    // Remplacer les sources d'image par <img>
+                    if (
+                      src &&
+                      (/\.(png|jpe?g|gif|svg|webp)(\?|$)/i.test(src) ||
+                        src.startsWith("data:image"))
+                    ) {
+                      const img = document.createElement("img");
+                      img.src = src;
+                      img.style.width = cloneNode.style.width || "100%";
+                      img.style.height = cloneNode.style.height || "auto";
+                      img.style.objectFit = "contain";
+                      cloneNode.parentNode.replaceChild(img, cloneNode);
+                      return;
+                    }
+
+                    // Pour les vidéos, utiliser l'attribut poster si disponible
+                    if (tag === "video") {
+                      const poster = cloneNode.getAttribute("poster") || "";
+                      if (poster) {
+                        const img = document.createElement("img");
+                        img.src = poster;
+                        img.style.width = cloneNode.style.width || "100%";
+                        img.style.height = cloneNode.style.height || "auto";
+                        img.style.objectFit = "cover";
+                        cloneNode.parentNode.replaceChild(img, cloneNode);
+                        return;
+                      }
+                    }
+
+                    // Fallback: placeholder neutre (évite toute interaction réseau/DOM externe)
+                    const placeholder = document.createElement("div");
+                    placeholder.style.display = "flex";
+                    placeholder.style.alignItems = "center";
+                    placeholder.style.justifyContent = "center";
+                    placeholder.style.width = cloneNode.style.width || "100%";
+                    placeholder.style.height =
+                      cloneNode.style.height ||
+                      (cloneNode.offsetHeight
+                        ? cloneNode.offsetHeight + "px"
+                        : "150px");
+                    placeholder.style.background = "#f8fafc";
+                    placeholder.style.border = "1px dashed #cbd5e1";
+                    placeholder.style.color = "#374151";
+                    placeholder.style.fontSize = "12px";
+                    placeholder.innerText = src
+                      ? `Contenu externe: ${src}`
+                      : "Contenu externe non affichable";
+                    cloneNode.parentNode.replaceChild(placeholder, cloneNode);
+                  } catch (errReplace) {
+                    try {
+                      cloneNode.remove();
+                    } catch (e) {}
+                  }
+                });
 
                 // placer hors écran pour que les styles s'appliquent
                 captureEl.style.position = "absolute";
@@ -3216,12 +3281,46 @@ Abidjan, Plateau</textarea
               captureEl = pageEl; // fallback
             }
 
-            const canvas = await html2canvas(captureEl, {
-              scale: 2,
-              useCORS: true,
-              allowTaint: true,
-              backgroundColor: "#ffffff",
-            });
+            let canvas;
+            try {
+              canvas = await html2canvas(captureEl, {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: "#ffffff",
+              });
+            } catch (pageErr) {
+              // Si l'erreur concerne un iframe cloné, on logge et on saute la page
+              if (
+                pageErr &&
+                pageErr.message &&
+                pageErr.message.includes("cloned iframe")
+              ) {
+                console.warn(
+                  `html2canvas skip page ${i} due to iframe clone issue:`,
+                  pageErr
+                );
+                skippedPages.push(i);
+                // Nettoyer la copie le cas échéant
+                try {
+                  if (
+                    captureEl &&
+                    captureEl !== pageEl &&
+                    captureEl.parentNode
+                  ) {
+                    captureEl.parentNode.removeChild(captureEl);
+                  }
+                } catch (e) {
+                  console.warn(
+                    "Impossible de retirer l'élément de capture:",
+                    e
+                  );
+                }
+                continue; // passer à la page suivante
+              }
+              // Pour d'autres erreurs, ré-échouer
+              throw pageErr;
+            }
 
             const imgData = canvas.toDataURL("image/jpeg", 0.95);
             const pdfWidth = pdf.internal.pageSize.getWidth();
