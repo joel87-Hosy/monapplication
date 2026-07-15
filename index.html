@@ -372,6 +372,64 @@
         font-size: 12px;
       }
 
+      .pro-shell {
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+      }
+      .pro-command {
+        width: 100%;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 12px 14px 12px 40px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        outline: none;
+        background: #fff;
+      }
+      .pro-command:focus {
+        border-color: #db2777;
+        box-shadow: 0 0 0 3px rgba(219, 39, 119, 0.12);
+      }
+      .skill-tile {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 16px;
+        transition: transform 0.2s ease, border-color 0.2s ease,
+          box-shadow 0.2s ease;
+      }
+      .skill-tile:hover {
+        transform: translateY(-2px);
+        border-color: #f9a8d4;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+      }
+      .health-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      .health-row:last-child {
+        border-bottom: 0;
+      }
+      .toast-pro {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        z-index: 9998;
+        max-width: 360px;
+        background: #0f172a;
+        color: white;
+        border-radius: 12px;
+        padding: 12px 16px;
+        box-shadow: 0 20px 40px rgba(15, 23, 42, 0.22);
+        font-size: 0.85rem;
+        font-weight: 700;
+      }
+
       /* --- STRUCTURE RESPONSIVE DE BASE --- */
 
       /* Masquer la sidebar sur mobile par défaut */
@@ -730,6 +788,13 @@
           >
             <i class="fas fa-folder-open w-5 text-purple-400"></i> Archives
           </button>
+          <button
+            onclick="switchView('skills')"
+            class="nav-btn w-full text-left p-3 rounded-xl transition flex items-center gap-3 hover:bg-slate-800 text-slate-300 hover:text-white"
+          >
+            <i class="fas fa-wand-magic-sparkles w-5 text-pink-300"></i>
+            Skills Pro
+          </button>
 
           <div class="my-4 border-t border-slate-800 pt-2">
             <button
@@ -898,6 +963,48 @@
                 </div>
               </div>
             </div>
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div class="pro-shell p-5 xl:col-span-2">
+                <div class="flex items-center justify-between gap-3 mb-4">
+                  <div>
+                    <h3 class="text-sm font-black text-slate-800 uppercase">
+                      Command Center
+                    </h3>
+                    <p class="text-xs text-slate-500 font-semibold mt-1">
+                      Recherche rapports, factures, liaisons et intervenants.
+                    </p>
+                  </div>
+                  <span
+                    class="text-[10px] font-black bg-pink-50 text-pink-700 border border-pink-100 px-2 py-1 rounded-full"
+                    >PRO</span
+                  >
+                </div>
+                <div class="relative">
+                  <i
+                    class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
+                  ></i>
+                  <input
+                    id="global-search"
+                    class="pro-command"
+                    placeholder="Rechercher un code, une liaison, un client..."
+                    oninput="runGlobalSearch(this.value)"
+                  />
+                </div>
+                <div
+                  id="global-search-results"
+                  class="mt-3 max-h-64 overflow-y-auto custom-scrollbar divide-y divide-slate-100"
+                ></div>
+              </div>
+              <div class="pro-shell p-5">
+                <div class="flex items-center justify-between mb-3">
+                  <h3 class="text-sm font-black text-slate-800 uppercase">
+                    Sante Ops
+                  </h3>
+                  <i class="fas fa-shield-heart text-green-500"></i>
+                </div>
+                <div id="ops-health-panel" class="text-sm"></div>
+              </div>
+            </div>
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-80">
               <div
                 class="col-span-2 bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex flex-col"
@@ -927,6 +1034,87 @@
                     >Total Proformé</span
                   >
                 </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="view-skills" class="hidden max-w-7xl mx-auto space-y-6">
+            <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+              <div>
+                <h2 class="text-3xl font-black text-slate-800 tracking-tight">
+                  Skills Pro
+                </h2>
+                <p class="text-sm text-slate-500 font-medium mt-1">
+                  Outils avances pour piloter, securiser et accelerer le workflow.
+                </p>
+              </div>
+              <div class="flex gap-2">
+                <button
+                  onclick="exportAppBackup()"
+                  class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg font-bold text-sm shadow transition"
+                >
+                  <i class="fas fa-download mr-2"></i>Backup
+                </button>
+                <button
+                  onclick="document.getElementById('backup-import-input').click()"
+                  class="bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 px-4 py-2 rounded-lg font-bold text-sm shadow-sm transition"
+                >
+                  <i class="fas fa-upload mr-2"></i>Restaurer
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+              <button class="skill-tile text-left" onclick="focusGlobalSearch()">
+                <div class="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-3">
+                  <i class="fas fa-magnifying-glass"></i>
+                </div>
+                <h3 class="font-black text-slate-800">Recherche 360</h3>
+                <p class="text-xs text-slate-500 mt-2 font-semibold">
+                  Trouver rapidement rapports, clients, liaisons et proformas.
+                </p>
+              </button>
+              <button class="skill-tile text-left" onclick="showQualityAudit()">
+                <div class="w-10 h-10 rounded-lg bg-green-50 text-green-600 flex items-center justify-center mb-3">
+                  <i class="fas fa-list-check"></i>
+                </div>
+                <h3 class="font-black text-slate-800">Audit Qualite</h3>
+                <p class="text-xs text-slate-500 mt-2 font-semibold">
+                  Controle les champs critiques, GPS, photos et dossiers incomplets.
+                </p>
+              </button>
+              <button class="skill-tile text-left" onclick="copyDailyBrief()">
+                <div class="w-10 h-10 rounded-lg bg-pink-50 text-pink-600 flex items-center justify-center mb-3">
+                  <i class="fas fa-clipboard"></i>
+                </div>
+                <h3 class="font-black text-slate-800">Brief Journalier</h3>
+                <p class="text-xs text-slate-500 mt-2 font-semibold">
+                  Genere un resume pret a partager avec les equipes.
+                </p>
+              </button>
+              <button class="skill-tile text-left" onclick="cleanDrafts()">
+                <div class="w-10 h-10 rounded-lg bg-orange-50 text-orange-600 flex items-center justify-center mb-3">
+                  <i class="fas fa-broom"></i>
+                </div>
+                <h3 class="font-black text-slate-800">Nettoyage Smart</h3>
+                <p class="text-xs text-slate-500 mt-2 font-semibold">
+                  Vide les brouillons locaux sans toucher aux rapports sauvegardes.
+                </p>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div class="pro-shell p-5 lg:col-span-2">
+                <h3 class="text-sm font-black text-slate-800 uppercase mb-4">
+                  Audit live
+                </h3>
+                <div id="quality-audit-list" class="space-y-2 text-sm"></div>
+              </div>
+              <div class="pro-shell p-5">
+                <h3 class="text-sm font-black text-slate-800 uppercase mb-4">
+                  Snapshot
+                </h3>
+                <div id="skills-snapshot" class="space-y-3 text-sm"></div>
               </div>
             </div>
           </div>
@@ -1576,6 +1764,13 @@ Abidjan, Plateau</textarea
       </main>
     </div>
     <datalist id="price-list-options"></datalist>
+    <input
+      id="backup-import-input"
+      type="file"
+      accept="application/json"
+      class="hidden"
+      onchange="importAppBackup(this)"
+    />
 
     <script>
       let gcData = []; // Pour stocker les étapes de la marche
@@ -1618,6 +1813,260 @@ Abidjan, Plateau</textarea
       let charts = {};
       let mapInstance = null;
       let markersGroup = null;
+
+      const PRO_BACKUP_KEYS = [
+        "itc_reports_v34",
+        "itc_invoices_v1",
+        "itc_prices_v11",
+        "itc_users_v1",
+        "itc_report_counter",
+      ];
+
+      function showProToast(message) {
+        const oldToast = document.querySelector(".toast-pro");
+        if (oldToast) oldToast.remove();
+        const toast = document.createElement("div");
+        toast.className = "toast-pro";
+        toast.innerHTML = `<i class="fas fa-circle-check mr-2 text-green-300"></i>${message}`;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3200);
+      }
+
+      function hasGpsValue(report) {
+        const gps = report?.data?.inputs?.inp_pk_gps || "";
+        return /-?\d+\.\d+[, ]+-?\d+\.\d+/.test(gps);
+      }
+
+      function reportHasPhoto(report) {
+        const images = report?.data?.images || {};
+        const hasDynamic = Object.values(images).some((section) =>
+          (section?.urls || []).some(Boolean)
+        );
+        const hasSurv = (report?.data?.survImages || []).some(Boolean);
+        return hasDynamic || hasSurv;
+      }
+
+      function normalizeText(value) {
+        return (value || "")
+          .toString()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .toLowerCase();
+      }
+
+      function getOpsHealth() {
+        const reports = APP_DATA.reports || [];
+        const incidents = reports.filter((r) => r.summary?.type === "incident");
+        const gpsReady = reports.filter(hasGpsValue).length;
+        const photoReady = reports.filter(reportHasPhoto).length;
+        const draftReady = !!localStorage.getItem("itc_report_draft");
+        const pendingInvoices = (APP_DATA.invoices || []).filter(
+          (i) => normalizeText(i.status) !== "valide"
+        ).length;
+        return {
+          reports: reports.length,
+          incidents: incidents.length,
+          gpsReady,
+          photoReady,
+          draftReady,
+          pendingInvoices,
+          gpsRate: reports.length ? Math.round((gpsReady / reports.length) * 100) : 0,
+          photoRate: reports.length
+            ? Math.round((photoReady / reports.length) * 100)
+            : 0,
+        };
+      }
+
+      function renderOpsHealth() {
+        const panel = document.getElementById("ops-health-panel");
+        if (!panel) return;
+        const h = getOpsHealth();
+        panel.innerHTML = `
+          <div class="health-row"><span class="font-bold text-slate-500">GPS exploitables</span><strong class="text-slate-900">${h.gpsRate}%</strong></div>
+          <div class="health-row"><span class="font-bold text-slate-500">Dossiers avec photos</span><strong class="text-slate-900">${h.photoRate}%</strong></div>
+          <div class="health-row"><span class="font-bold text-slate-500">Proformas a suivre</span><strong class="text-slate-900">${h.pendingInvoices}</strong></div>
+          <div class="health-row"><span class="font-bold text-slate-500">Brouillon local</span><strong class="${h.draftReady ? "text-orange-600" : "text-green-600"}">${h.draftReady ? "Actif" : "Clean"}</strong></div>
+        `;
+      }
+
+      function buildSearchIndex() {
+        const reportRows = (APP_DATA.reports || []).map((r, index) => ({
+          kind: "Rapport",
+          icon: "fa-file-lines",
+          title: r.data?.inputs?.inp_report_code || r.summary?.liaison || "Rapport",
+          meta: `${r.summary?.type || "-"} | ${r.summary?.date || "-"} | ${
+            r.summary?.intervenant || "-"
+          }`,
+          haystack: JSON.stringify(r).toLowerCase(),
+          action: () => loadReport(index),
+        }));
+        const invoiceRows = (APP_DATA.invoices || []).map((i, index) => ({
+          kind: "Proforma",
+          icon: "fa-file-invoice-dollar",
+          title: i.num || i.client || "Proforma",
+          meta: `${i.client || "-"} | ${i.status || "-"} | ${i.total || 0} FCFA`,
+          haystack: JSON.stringify(i).toLowerCase(),
+          action: () => loadInvoice(index),
+        }));
+        return reportRows.concat(invoiceRows);
+      }
+
+      function runGlobalSearch(query) {
+        const target = document.getElementById("global-search-results");
+        if (!target) return;
+        const q = (query || "").trim().toLowerCase();
+        if (!q) {
+          target.innerHTML =
+            '<div class="py-5 text-sm text-slate-400 font-bold">Tapez au moins un mot cle.</div>';
+          return;
+        }
+        const rows = buildSearchIndex()
+          .filter((row) => row.haystack.includes(q))
+          .slice(0, 12);
+        target.innerHTML = rows.length
+          ? rows
+              .map(
+                (row, index) => `
+                  <button onclick="openSearchResult(${index})" class="w-full text-left py-3 hover:bg-slate-50 transition">
+                    <div class="flex items-center gap-3">
+                      <span class="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 flex items-center justify-center"><i class="fas ${row.icon}"></i></span>
+                      <div class="min-w-0">
+                        <p class="font-black text-slate-800 truncate">${row.title}</p>
+                        <p class="text-xs text-slate-500 font-semibold truncate">${row.kind} | ${row.meta}</p>
+                      </div>
+                    </div>
+                  </button>`
+              )
+              .join("")
+          : '<div class="py-5 text-sm text-slate-400 font-bold">Aucun resultat.</div>';
+        window.__lastSearchRows = rows;
+      }
+
+      function openSearchResult(index) {
+        const row = (window.__lastSearchRows || [])[index];
+        if (row && typeof row.action === "function") row.action();
+      }
+
+      function focusGlobalSearch() {
+        switchView("dashboard");
+        setTimeout(() => document.getElementById("global-search")?.focus(), 100);
+      }
+
+      function getQualityIssues() {
+        const issues = [];
+        (APP_DATA.reports || []).forEach((report, index) => {
+          const code = report.data?.inputs?.inp_report_code || `Rapport ${index + 1}`;
+          const missing = [];
+          if (!report.summary?.date) missing.push("date");
+          if (!report.summary?.liaison) missing.push("liaison");
+          if (!report.summary?.intervenant) missing.push("intervenant");
+          if (!hasGpsValue(report)) missing.push("GPS");
+          if (!reportHasPhoto(report)) missing.push("photos");
+          if (missing.length) issues.push({ code, missing, index });
+        });
+        return issues;
+      }
+
+      function showQualityAudit() {
+        const list = document.getElementById("quality-audit-list");
+        if (!list) return;
+        const issues = getQualityIssues();
+        list.innerHTML = issues.length
+          ? issues
+              .slice(0, 20)
+              .map(
+                (issue) => `
+                  <button onclick="loadReport(${issue.index})" class="w-full text-left p-3 rounded-lg border border-orange-100 bg-orange-50 hover:bg-orange-100 transition">
+                    <div class="flex justify-between gap-3">
+                      <strong class="text-slate-800">${issue.code}</strong>
+                      <span class="text-[10px] font-black text-orange-700 uppercase">A completer</span>
+                    </div>
+                    <p class="text-xs text-orange-800 mt-1 font-semibold">${issue.missing.join(", ")}</p>
+                  </button>`
+              )
+              .join("")
+          : '<div class="p-4 rounded-lg bg-green-50 border border-green-100 text-green-700 font-bold">Tous les dossiers controles sont propres.</div>';
+        renderSkillsSnapshot();
+      }
+
+      function renderSkillsSnapshot() {
+        const box = document.getElementById("skills-snapshot");
+        if (!box) return;
+        const h = getOpsHealth();
+        const issues = getQualityIssues().length;
+        box.innerHTML = `
+          <div class="health-row"><span class="font-bold text-slate-500">Rapports</span><strong>${h.reports}</strong></div>
+          <div class="health-row"><span class="font-bold text-slate-500">Incidents</span><strong>${h.incidents}</strong></div>
+          <div class="health-row"><span class="font-bold text-slate-500">Alertes qualite</span><strong class="${issues ? "text-orange-600" : "text-green-600"}">${issues}</strong></div>
+          <div class="health-row"><span class="font-bold text-slate-500">GPS</span><strong>${h.gpsReady}/${h.reports}</strong></div>
+        `;
+      }
+
+      function copyDailyBrief() {
+        const h = getOpsHealth();
+        const issues = getQualityIssues().length;
+        const text = `Brief FiberOps: ${h.reports} rapports, ${h.incidents} incidents, ${h.pendingInvoices} proformas a suivre, ${issues} alertes qualite, GPS ${h.gpsRate}%.`;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(() => showProToast("Brief copie dans le presse-papiers."));
+        } else {
+          prompt("Brief a copier", text);
+        }
+      }
+
+      function cleanDrafts() {
+        localStorage.removeItem("itc_report_draft");
+        renderOpsHealth();
+        renderSkillsSnapshot();
+        showProToast("Brouillon local nettoye.");
+      }
+
+      function exportAppBackup() {
+        const payload = {
+          app: "ITC FiberOps",
+          version: "pro",
+          exportedAt: new Date().toISOString(),
+          data: PRO_BACKUP_KEYS.reduce((acc, key) => {
+            acc[key] = localStorage.getItem(key);
+            return acc;
+          }, {}),
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], {
+          type: "application/json",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `itc-fiberops-backup-${new Date()
+          .toISOString()
+          .slice(0, 10)}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+        showProToast("Backup exporte.");
+      }
+
+      function importAppBackup(input) {
+        const file = input.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const payload = JSON.parse(event.target.result);
+            if (!payload.data) throw new Error("Backup invalide");
+            if (!confirm("Restaurer ce backup ? Les donnees locales seront remplacees.")) return;
+            PRO_BACKUP_KEYS.forEach((key) => {
+              if (payload.data[key] !== undefined && payload.data[key] !== null) {
+                localStorage.setItem(key, payload.data[key]);
+              }
+            });
+            location.reload();
+          } catch (error) {
+            alert("Backup invalide ou illisible.");
+          } finally {
+            input.value = "";
+          }
+        };
+        reader.readAsText(file);
+      }
 
       // --- CODE GENERATOR (Generalized) ---
       function getNewReportCode(type) {
@@ -1768,6 +2217,10 @@ Abidjan, Plateau</textarea
           .forEach((e) => e.classList.add("hidden"));
         document.getElementById(`view-${id}`).classList.remove("hidden");
         if (id === "dashboard") initDashboard();
+        if (id === "skills") {
+          renderSkillsSnapshot();
+          showQualityAudit();
+        }
         if (id === "incidents") renderIncidentsTable();
         if (id === "history") renderHistoryTable();
         if (id === "invoices-list") renderInvoicesTable();
@@ -1880,6 +2333,8 @@ Abidjan, Plateau</textarea
         document.getElementById(
           "ai-trend-text"
         ).innerText = `Basé sur ${incs.length} incidents.`;
+        renderOpsHealth();
+        runGlobalSearch("");
         if (charts.rec) charts.rec.destroy();
         const ctx1 = document.getElementById("recurrenceChart");
         if (ctx1)
